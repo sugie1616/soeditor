@@ -17,7 +17,8 @@ class SoTextEdit : public QTextEdit
 
 
 private:
-
+	int block_stack;
+	int tab_width;
 public:
   SoTextEdit();
   void keyPressEvent(QKeyEvent *input);
