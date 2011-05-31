@@ -1,4 +1,4 @@
-#include "SOEKeyBind.h"
+#include "soeditor.h"
 
 SOEKeyBind::SOEKeyBind(QObject *parent):QAction(parent)
 {

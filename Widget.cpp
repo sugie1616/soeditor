@@ -1,4 +1,4 @@
-#include "Widget.h"
+#include "soeditor.h"
 
 using namespace std;
 

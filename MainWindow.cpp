@@ -1,5 +1,4 @@
-#include "Window.h"
-#include <QtGui>
+#include "soeditor.h"
 
 MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(iParent, iFlags)
 {

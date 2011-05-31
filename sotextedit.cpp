@@ -1,10 +1,11 @@
-#include "sotextedit.h"
+#include "soeditor.h"
 
 using namespace std;
 
 SoTextEdit::SoTextEdit()
 {
-
+	block_stack = 0;
+	tab_width = 4;
 	setPlainText(tr(""));
 	setCursorWidth(6);
 	ensureCursorVisible();
@@ -18,7 +19,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 	QTextCursor cursor = textCursor();
 	QString text;
 	int position = 0;
-	int count = 0;
+	int count;
 
 	switch (input->key()) {
 	case Qt::Key_Shift:
@@ -26,25 +27,50 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 	case Qt::Key_unknown:
 		input->ignore();
 		return;
-	case Qt::Key_Return:
+	case Qt::Key_BraceLeft:
 		cursor.insertText(input->text());
-		cursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor);
-		cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
-		text = cursor.selectedText();
-		while (count < text.size()) {
-			if (text[count] == QChar('{')) {
-				block_stack++;
-			} else if (text[count] == QChar('}')) {
-				block_stack--;
-			}
-			count++;
-		}
-		cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor);
-		cursor.insertText(text.fill(' ', tab_width * block_stack));
+		block_stack++;
+		std::cout << block_stack << std::endl;
+		return;
+	case Qt::Key_BraceRight:
+		cursor.insertText(input->text());
+		block_stack--;
+		std::cout << block_stack << std::endl;
+		return;
+//	case Qt::Key_Return:
+		// cursor.insertText(input->text());
+		// cursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor);
+		// cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+		// text = cursor.selectedText();
+		// count = 0;
+		// while (count < text.size()) {
+		// 	if (text[count] == QChar('{')) {
+		// 		block_stack++;
+		// 	} else if (text[count] == QChar('}')) {
+		// 		block_stack--;
+		// 	}
+		// 	count++;
+		// }
+		// cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor);
+		// cursor.insertText(text.fill(' ', tab_width * block_stack));
+		// return;
 	case Qt::Key_Tab:
-		text.fill(' ', tab_width);
-		cursor.insertText(text);
-		setTextCursor(cursor);
+		position = cursor.position();
+		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+		cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+ 		text = cursor.selectedText();
+		if (text[0] == QChar(' ')) {
+
+
+
+		}
+
+
+		cursor.setPosition(count, QTextCursor::KeepAnchor);
+ 		text.fill(' ', tab_width * block_stack);
+ 		cursor.insertText(text);
+		cursor.setPosition(position);
+ 		setTextCursor(cursor);
 		return;
 	case Qt::Key_Left:
 		cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor);
@@ -65,9 +91,9 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 	case Qt::Key_Backspace:
 		position = cursor.position() - 1;
 		cursor.deletePreviousChar();
-		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
-		cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
-		text = cursor.selectedText();  	
+		cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
+		cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
+		text = cursor.selectedText();
 		break;
 	default:
 		position = cursor.position() + 1;
@@ -76,7 +102,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
 		text = cursor.selectedText();
 	}
-	
+
 	qDebug() << text;
 
 	if (text.isEmpty()) {
@@ -150,6 +176,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 	} else {
 		cursor.insertText(text, setColor(Qt::black));
 	}
+
 	cursor.setPosition(position, QTextCursor::MoveAnchor);
 	setTextCursor(cursor);
 }
