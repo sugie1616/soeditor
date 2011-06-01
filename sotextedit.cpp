@@ -55,18 +55,15 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		// cursor.insertText(text.fill(' ', tab_width * block_stack));
 		// return;
 	case Qt::Key_Tab:
-		position = cursor.position();
+		position = cursor.position() + (tab_width * block_stack);
 		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
 		cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
  		text = cursor.selectedText();
+
+		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
 		if (text[0] == QChar(' ')) {
-
-
-
+			cursor.movePosition(QTextCursor::NextWord, QTextCursor::KeepAnchor);
 		}
-
-
-		cursor.setPosition(count, QTextCursor::KeepAnchor);
  		text.fill(' ', tab_width * block_stack);
  		cursor.insertText(text);
 		cursor.setPosition(position);
@@ -109,6 +106,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		return;
 	}
 
+//for c
 	if (text == QString("void")) {
 		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("char")) {
@@ -123,7 +121,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("double")) {
 		cursor.insertText(text, setColor(Qt::darkGreen));
-	} else if (text == QString("aut")) {
+	} else if (text == QString("out")) {
 		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("static")) {
 		cursor.insertText(text, setColor(Qt::darkGreen));
@@ -172,6 +170,16 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 	} else if (text == QString("union")) {
 		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("sizeof")) {
+		cursor.insertText(text, setColor(Qt::darkMagenta));
+
+//for c++
+	} else if (text == QString("private")) {
+		cursor.insertText(text, setColor(Qt::darkMagenta));
+	} else if (text == QString("protected")) {
+		cursor.insertText(text, setColor(Qt::darkMagenta));
+	} else if (text == QString("class")) {
+		cursor.insertText(text, setColor(Qt::darkMagenta));
+	} else if (text == QString("public")) {
 		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else {
 		cursor.insertText(text, setColor(Qt::black));
