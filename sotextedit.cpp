@@ -2,7 +2,7 @@
 
 using namespace std;
 
-SoTextEdit::SoTextEdit()
+SoTextEdit::SoTextEdit() 
 {
 	block_stack = 0;
 	tab_width = 4;
@@ -11,6 +11,10 @@ SoTextEdit::SoTextEdit()
 	ensureCursorVisible();
 	setFont(QFont("Arial",12));
 
+	lineNumberArea = new LineNumberArea(this);
+	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
+	connect(this, SIGNAL(updateRequest(const QRect &, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
+	updateLineNumberAreaWidth(0);
 }
 
 void SoTextEdit::keyPressEvent(QKeyEvent *input)
@@ -18,7 +22,9 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 
 	QTextCursor cursor = textCursor();
 	QString text;
+	QTextBlock block;
 	int position = 0;
+	int position_in_block = 0;
 	int count;
 
 	switch (input->key()) {
@@ -29,68 +35,226 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		return;
 	case Qt::Key_BraceLeft:
 		cursor.insertText(input->text());
-		block_stack++;
 		std::cout << block_stack << std::endl;
 		return;
 	case Qt::Key_BraceRight:
-		cursor.insertText(input->text());
-		block_stack--;
-		std::cout << block_stack << std::endl;
-		return;
-//	case Qt::Key_Return:
-		// cursor.insertText(input->text());
-		// cursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor);
-		// cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
-		// text = cursor.selectedText();
-		// count = 0;
-		// while (count < text.size()) {
-		// 	if (text[count] == QChar('{')) {
-		// 		block_stack++;
-		// 	} else if (text[count] == QChar('}')) {
-		// 		block_stack--;
-		// 	}
-		// 	count++;
-		// }
-		// cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor);
-		// cursor.insertText(text.fill(' ', tab_width * block_stack));
-		// return;
-	case Qt::Key_Tab:
-		position = cursor.position() + (tab_width * block_stack);
+		position = cursor.position();
 		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
 		cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
- 		text = cursor.selectedText();
+		text = cursor.selectedText();
+
+		count = 0;
+		while (text[count] == QChar(' ')) {
+			count++;
+		}
+		text = text.mid(count);
+		cursor.insertText(text);
 
 		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
-		if (text[0] == QChar(' ')) {
-			cursor.movePosition(QTextCursor::NextWord, QTextCursor::KeepAnchor);
+
+		if (0 < block_stack) {
+			text.fill(' ', tab_width * (block_stack - 1));
+			cursor.insertText(text);
+			position = position - count + (tab_width * (block_stack - 1));
+			cursor.setPosition(position);
+			cursor.insertText(input->text());
+			setTextCursor(cursor);
+		} else {
+			cursor.insertText("");
+			position = position - count;
+			cursor.setPosition(position);
+			cursor.insertText(input->text());
+			setTextCursor(cursor);
 		}
- 		text.fill(' ', tab_width * block_stack);
- 		cursor.insertText(text);
-		cursor.setPosition(position);
- 		setTextCursor(cursor);
+
+		std::cout << block_stack << std::endl;
+		return;
+	case Qt::Key_Return:
+		cursor.insertText(input->text());
+		cursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor);
+		cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+		text = cursor.selectedText();
+		count = 0;
+		while (count <= text.size()) {
+			if (text[count] == QChar('{')) {
+				block_stack++;
+			} else if (text[count] == QChar('}')) {
+				block_stack--;
+			}
+			count++;
+		}
+		if (0 < block_stack) {
+			cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor);
+			cursor.insertText(text.fill(' ', tab_width * block_stack));
+		}
+		std::cout << block_stack << std::endl;
+		return;
+	case Qt::Key_Tab:
+		position = cursor.position();
+		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+		cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+		text = cursor.selectedText();
+
+		count = 0;
+		while (text[count] == QChar(' ')) {
+			count++;
+		}
+
+		if (count == text.size()) {
+			text.fill(' ', tab_width * block_stack);
+			cursor.insertText(text);
+			return;
+		}
+
+		text = text.mid(count);
+		cursor.insertText(text);
+		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+
+		if (0 < block_stack) {
+			text.fill(' ', tab_width * block_stack);
+			cursor.insertText(text);
+			position = position - count + (tab_width * block_stack);
+			cursor.setPosition(position);
+			setTextCursor(cursor);
+		} else {
+			cursor.insertText("");
+			position = position - count;
+			cursor.setPosition(position);
+			setTextCursor(cursor);
+		}
+		std::cout << block_stack << std::endl;
 		return;
 	case Qt::Key_Left:
-		cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor);
+		if (cursor.atBlockStart()) {
+			cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor);
+			position = cursor.position();
+			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+			text = cursor.selectedText();
+
+			count = 0;
+			while (count < text.size()) {
+				if (text[count] == QChar('{')) {
+					block_stack--;
+				} else if (text[count] == QChar('}')) {
+					block_stack++;
+				}
+				count++;
+			}
+			cursor.setPosition(position, QTextCursor::MoveAnchor);
+		} else {
+			cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor);
+		}
 		setTextCursor(cursor);
+		std::cout << block_stack << std::endl;
 		return;
 	case Qt::Key_Right:
+		if (cursor.atEnd()) {
+			return;
+		} else if (cursor.atBlockEnd()) {
+			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+			cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+			text = cursor.selectedText();
+
+			count = 0;
+			while (count < text.size()) {
+				if (text[count] == QChar('{')) {
+					block_stack++;
+				} else if (text[count] == QChar('}')) {
+					block_stack--;
+				}
+				count++;
+			}
+		}
 		cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor);
 		setTextCursor(cursor);
+		std::cout << block_stack << std::endl;
 		return;
 	case Qt::Key_Down:
-		cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor);
-		setTextCursor(cursor);
-		return;
+		block = cursor.block();
+		if ((block.blockNumber() + 1 ) == blockCount()) {
+			return;
+		} else {
+			position = cursor.position();
+
+			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+			cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+			text = cursor.selectedText();
+
+			count = 0;
+			while (count < text.size()) {
+				if (text[count] == QChar('{')) {
+					block_stack++;
+				} else if (text[count] == QChar('}')) {
+					block_stack--;
+				}
+				count++;
+			}
+
+			cursor.setPosition(position);
+			cursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor);
+			setTextCursor(cursor);
+			std::cout << block_stack << std::endl;
+			return;
+		}
 	case Qt::Key_Up:
-		cursor.movePosition(QTextCursor::Up, QTextCursor::MoveAnchor);
-		setTextCursor(cursor);
-		return;
+		block = cursor.block();
+		if (block.blockNumber() == 0) {
+			return;
+		} else {
+			cursor.movePosition(QTextCursor::Up, QTextCursor::MoveAnchor);
+			position = cursor.position();
+
+			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
+			cursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+			text = cursor.selectedText();
+
+			count = 0;
+			while (count < text.size()) {
+				if (text[count] == QChar('{')) {
+					block_stack--;
+				} else if (text[count] == QChar('}')) {
+					block_stack++;
+				}
+				count++;
+			}
+
+			cursor.setPosition(position);
+			setTextCursor(cursor);
+			std::cout << block_stack << std::endl;
+			return;
+		}
 	case Qt::Key_Backspace:
-		position = cursor.position() - 1;
-		cursor.deletePreviousChar();
-		cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
-		cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
-		text = cursor.selectedText();
+		if (cursor.atBlockStart()) {
+			position = cursor.position() - 1;
+			cursor.deletePreviousChar();
+			cursor.movePosition(QTextCursor::NoMove, QTextCursor::MoveAnchor);
+			cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+			text = cursor.selectedText();
+
+			std::cout << "debug_text   " << qPrintable(text) << std::endl;
+
+			count = 0;
+			while (count < text.size()) {
+				if (text[count] == QChar('{')) {
+					block_stack--;
+				} else if (text[count] == QChar('}')) {
+					block_stack++;
+				}
+				count++;
+			}
+
+			cursor.setPosition(position);
+			cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
+			cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
+			text = cursor.selectedText();
+		} else { 
+			position = cursor.position() - 1;
+			cursor.deletePreviousChar();
+			cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
+			cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
+			text = cursor.selectedText();
+		}
+		std::cout << block_stack <<std::endl;
 		break;
 	default:
 		position = cursor.position() + 1;
@@ -243,5 +407,68 @@ void SoTextEdit::dump_token(QStringList token)
 	while (!token.empty()) {
 		std::cout << "dump_token    " << "\"" << qPrintable(token.back()) << "\"" << std::endl;
 		token.pop_back();
+	}
+}
+
+
+void SoTextEdit::resizeEvent(QResizeEvent *event)
+{
+	QPlainTextEdit::resizeEvent(event);
+	QRect r = rect();
+	lineNumberArea->setGeometry(QRect(r.left(), r.top(), lineNumberAreaWidth(), r.height()));
+}
+
+int SoTextEdit::lineNumberAreaWidth()
+{
+	QTextCursor t_cursor = textCursor();
+	int digits = 1;
+	int max = qMax(1, t_cursor.blockNumber());
+	while (max >= 10) {
+		max /= 10;
+		++digits;
+	}
+
+	int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
+
+	return space*1.5;
+}
+
+void SoTextEdit::updateLineNumberAreaWidth(int /* newBlockCount */)
+{
+	setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
+}
+
+void SoTextEdit::updateLineNumberArea(const QRect &rect, int dy)
+{
+	if (dy)
+		lineNumberArea->scroll(0, dy);
+	else
+		lineNumberArea->update(0, rect.y(), lineNumberArea->width(), rect.height());
+
+	if (rect.contains(viewport()->rect()))
+		updateLineNumberAreaWidth(0);
+}
+
+void SoTextEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
+{
+	QTextCursor t_cursor = textCursor();
+	QPainter painter(lineNumberArea);
+	painter.fillRect(event->rect(), Qt::lightGray);
+	QTextBlock block = firstVisibleBlock();
+	int blockNumber = block.blockNumber();
+	int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
+	int bottom = top + (int) blockBoundingRect(block).height();
+	while (block.isValid() && top <= event->rect().bottom()) {
+		if (block.isVisible() && bottom >= event->rect().top()) {
+			QString number = QString::number(blockNumber + 1);
+			painter.setPen(Qt::black);
+			painter.drawText(0, top, lineNumberArea->width(), fontMetrics().height(),
+					Qt::AlignRight, number);
+		}
+
+		block = block.next();
+		top = bottom;
+		bottom = top + (int) blockBoundingRect(block).height();
+		++blockNumber;
 	}
 }

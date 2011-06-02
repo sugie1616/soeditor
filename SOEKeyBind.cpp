@@ -12,7 +12,7 @@ SOEKeyBind::SOEKeyBind(QObject *parent):QAction(parent)
 	widget->addAction(CtrlC);
 }
 */
-void SOEKeyBind::setSOE_TextKeyBind(QTextEdit *text)
+void SOEKeyBind::setSOE_TextKeyBind(SoTextEdit *text)
 {
 	QAction *CtrlF = new QAction(this);
 	CtrlF->setShortcut(tr("Ctrl+F"));

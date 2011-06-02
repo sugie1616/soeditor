@@ -5,7 +5,7 @@ using namespace std;
 map<QWidget*, SoTextEdit*> g_textedit_map;
 map<QWidget*, QString> g_filename_map;
 
-Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
+	Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
 : QWidget(iParent, iFlags)
 {
 	proc = new QProcess(this);
@@ -30,8 +30,6 @@ void Widget::makeWidgets()
 
 	m_CmdLabel = new QLabel(tr("Cmd:"));
 	m_CmdLine = new QLineEdit(this);
-
-
 
 	m_SettingButton = new QPushButton(tr("&Setting"));
 	connect(m_SettingButton, SIGNAL(clicked()), this, SLOT(settingClickedSlot()));
@@ -74,6 +72,7 @@ void Widget::makeWidgets()
 	connect(m_Tab, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
 	connect(m_Tab, SIGNAL(currentChanged(int)), this, SLOT(filenameChange(int)));
 	connect(m_Tab, SIGNAL(currentChanged(int)), this, SLOT(textCursorPositionChangedSlot1(int)));
+	connect(m_Tab, SIGNAL(currentChanged(int)), this, SLOT(currentTabChangedSlot(int)));
 	connect(keyBind, SIGNAL(CtrlF_PressedSignal()), this, SLOT(setCtrlF()));
 	connect(keyBind, SIGNAL(CtrlB_PressedSignal()), this, SLOT(setCtrlB()));
 	connect(keyBind, SIGNAL(CtrlN_PressedSignal()), this, SLOT(setCtrlN()));
@@ -90,10 +89,8 @@ void Widget::newTab()
 	m_Text->setPlainText(tr(""));
 	m_Text->setCursorWidth(6);
 	m_Text->ensureCursorVisible();
-	m_Text->setFont(QFont("Arial",12));
 	keyBind->setSOE_TextKeyBind(m_Text);
 	m_Tab->addTab(m_Text, title);
-
 	QTextCursor t_cursor = m_Text->textCursor();
 	t_cursor.movePosition(QTextCursor::End);
 	m_Text->setTextCursor(t_cursor);
@@ -105,37 +102,15 @@ void Widget::newTab()
 	m_Tab->setCurrentIndex(m_Tab->count() - 1);
 }
 
-void Widget::setCtrlF()
-{
-	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Right, QTextCursor::MoveAnchor);
-}
-void Widget::setCtrlB()
-{
-	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Left, QTextCursor::MoveAnchor);
-}
-void Widget::setCtrlP()
-{
-	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Up, QTextCursor::MoveAnchor);
-}
-void Widget::setCtrlN()
-{
-	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
-}
-
-void Widget::textChecker()
-{
-	//m_Tab->widget(m_Tab->currentIndex())->setStyleSheet("color: red;");
-}
-
 void Widget::closeTab(int index)
 {
 	if(countTab > (tabRemoveChecker + 1))
 	{
-	  g_textedit_map.erase(m_Tab->widget(index));
-	  g_filename_map.erase(m_Tab->widget(index));
-	  tabRemoveChecker ++;
-	  m_Tab->removeTab(index);
-  }
+	g_textedit_map.erase(m_Tab->widget(index));
+	g_filename_map.erase(m_Tab->widget(index));
+	tabRemoveChecker ++;
+	m_Tab->removeTab(index);
+	}
 }
 
 void Widget::lineLoad()
@@ -191,6 +166,7 @@ void Widget::buttonLoad()
 			return;
 		}
 		QTextStream in(&file);
+		newTab();
 		g_textedit_map[m_Tab->currentWidget()]->setPlainText(in.readAll());
 		m_FileName->setText(fileName);
 		g_filename_map[m_Tab->currentWidget()] = fileName;
@@ -202,10 +178,50 @@ int Widget::filenameChange(int index)
 	m_FileName->setText(g_filename_map[m_Tab->currentWidget()]);
 	return index;
 }
-
 void Widget::settingClickedSlot()
 {
 	emit settingClickedSignal();
+}
+
+
+void Widget::cmdExecSlot()
+{
+	QString cmd;
+	cmd = m_CmdLine->text();
+	proc->start(cmd);
+	g_textedit_map[m_Tab->currentWidget()]->appendPlainText( ">>>" + cmd );
+	std::cout << "command exec." << std::endl;
+	m_CmdLine->clear();
+}
+
+void Widget::appendViewSlot()
+{
+	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+	QString str(codec->toUnicode(proc->readAllStandardOutput()));
+	g_textedit_map[m_Tab->currentWidget()]->appendPlainText( str );
+	g_textedit_map[m_Tab->currentWidget()]->appendPlainText( "------------------" );
+}
+
+void Widget::setCtrlF()
+{
+	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Right, QTextCursor::MoveAnchor);
+}
+void Widget::setCtrlB()
+{
+	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Left, QTextCursor::MoveAnchor);
+}
+void Widget::setCtrlP()
+{
+	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Up, QTextCursor::MoveAnchor);
+}
+void Widget::setCtrlN()
+{
+	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+}
+
+void Widget::textChecker()
+{
+	//m_Tab->widget(m_Tab->currentIndex())->setStyleSheet("color: red;");
 }
 
 void Widget::textCursorPositionChangedSlot1(int)
@@ -228,20 +244,7 @@ int Widget::getTextCursorColumn()
 	return g_textedit_map[m_Tab->widget(m_Tab->currentIndex())]->textCursor().columnNumber();
 }
 
-void Widget::cmdExecSlot()
+void Widget::currentTabChangedSlot(int t)
 {
-	QString cmd;
-	cmd = m_CmdLine->text();
-	proc->start(cmd);
-	g_textedit_map[m_Tab->currentWidget()]->append( ">>>" + cmd );
-	std::cout << "command exec." << std::endl;
-	m_CmdLine->clear();
-}
-
-void Widget::appendViewSlot()
-{
-	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-	QString str(codec->toUnicode(proc->readAllStandardOutput()));
-	g_textedit_map[m_Tab->currentWidget()]->append( str );
-	g_textedit_map[m_Tab->currentWidget()]->append( "------------------" );
+	emit currentTabChangedSignal(t);
 }

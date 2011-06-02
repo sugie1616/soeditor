@@ -5,10 +5,17 @@ MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(
 	countBG = 0;
 	cursorline = 1;
 	cursorcolumn = 1;
-	statusBar()->showMessage(tr("line:1 column:1"));
 
 	timeLabel = new QLabel(this);
 	cursorPositionLabel = new QLabel(this);
+	tabNumLabel = new QLabel(this);
+
+	cursorPositionLabel->setText(QString("line:1 column:2"));
+
+	statusBar()->addPermanentWidget(cursorPositionLabel, 0);
+	statusBar()->addPermanentWidget(tabNumLabel, 0);
+	statusBar()->addPermanentWidget(timeLabel,0);
+	tabNumLabel->setText(QString("tab number:1"));
 
 	w_bgImage = QImage("image/screen4.png");
 
@@ -22,9 +29,9 @@ MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(
 	createTimeStatusBar();
 	setCurrentTime();
 	m_Widget = new Widget(this);
-	m_Widget->setFont(QFont("Arial",12));
 	connect(m_Widget, SIGNAL(textCursorPositionChangedSignal()), this, SLOT(createTextCursorPositionStatusBar()));
 	connect(m_Widget, SIGNAL(settingClickedSignal()), this, SLOT(setWindowBG()));
+	connect(m_Widget, SIGNAL(currentTabChangedSignal(int)), this, SLOT(setCurrentTabStatus(int)));
 	setAutoFillBackground(true);
 	setCentralWidget(m_Widget);
 	setWindowTitle(tr("Soeditor"));
@@ -43,16 +50,22 @@ void MainWindow::createTextCursorPositionStatusBar()
 {
 cursorline = m_Widget->getTextCursorLine();
 cursorcolumn = m_Widget->getTextCursorColumn();
-statusBar()->showMessage(QString("line:%1 column:%2").arg(cursorline + 1).arg(cursorcolumn + 1));
+cursorPositionLabel->setText(QString("line:%1 column:%2").arg(cursorline + 1).arg(cursorcolumn + 1));
+//statusBar()->showMessage(QString("line:%1 column:%2").arg(cursorline + 1).arg(cursorcolumn + 1));
 }
 
 void MainWindow::setCurrentTime()
 {
 	dt = QDateTime::currentDateTime();
 	now = dt.toString();
-now[0] = ' ';
+	now[0] = ' ';
 	timeLabel->setText(now);
-	statusBar()->addPermanentWidget(timeLabel,0);
+}
+
+void MainWindow::setCurrentTabStatus(int t)
+{
+	//statusBar()->showMessage(QString("current tab number :%1").arg(t + 1));
+	tabNumLabel->setText(QString("tab number:%1").arg(t + 1));
 }
 
 void MainWindow::setWindowBG() 
