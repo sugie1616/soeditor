@@ -69,7 +69,6 @@ class Widget : public QWidget
 		void settingClickedSignal();
 		void textCursorPositionChangedSignal();
 		void currentTabChangedSignal(int t);//
-		void changeFontSignal(QFont);
 	protected slots :
 		void newTab();
 		void closeTab(int index);
@@ -89,7 +88,8 @@ class Widget : public QWidget
 		void textCursorPositionChangedSlot2();
 		void currentTabChangedSlot(int t);
 		void hideSubTextArea();
-		void settingFinishedSlot();
+		void changeFontSize(int fontsize);
+		void changeFontName(QString fontname);
 		void setSettingMenuArea();
 		
 	private:
@@ -97,9 +97,9 @@ class Widget : public QWidget
 		int countTab;
 		int tabRemoveChecker;
 		QString fontname;
+		int fontsize;
 		int counter;
 		int settingmenu;
-		QSpinBox *setCharSizeSpinBox;
 		QHBoxLayout *m_h_StatusLayout;
 		QHBoxLayout *m_s_CmdLayout;
 		QHBoxLayout *m_c_TextLayout;
@@ -113,11 +113,15 @@ class Widget : public QWidget
 		QPushButton *m_SaveButton;
 		QPushButton *m_LoadButton;
 		QPushButton *m_SettingButton;
-		QPushButton *m_SettingFinishedButton;
+		
 		QGroupBox *m_SetCharGroup;
 		QLabel *setCharSizeLabel;
+		QSpinBox *setCharSizeSpinBox;
+		QLabel *setFontLabel;
+		QComboBox *setFontBox;
 		QGroupBox *m_SetBGGroup;
 		QGroupBox *m_SetDisplayGroup;
+
 
 
 		QLabel *m_CmdLabel;
@@ -219,7 +223,8 @@ protected:
 private:
 	int block_stack;
 	int tab_width;
-
+	QWidget *lineNumberArea;//new
+	int lineNumberWidth;//new
 	QColor builtin;
 	QColor comment;
 	QColor string;
@@ -230,9 +235,6 @@ private:
 	QColor type;
 	QColor warning;
 	QColor default_color;
-
-	QWidget *lineNumberArea;//new
-	int lineNumberWidth;//new
 private slots:
 	void updateLineNumberAreaWidth(int newBlockCount);
 	void updateLineNumberArea(const QRect &, int);

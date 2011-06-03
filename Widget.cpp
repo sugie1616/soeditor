@@ -5,28 +5,43 @@ using namespace std;
 map<QWidget*, SoTextEdit*> g_textedit_map;
 map<QWidget*, QString> g_filename_map;
 
-	Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
-: QWidget(iParent, iFlags)
+Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
+  : QWidget(iParent, iFlags)
 {
 	proc = new QProcess(this);
 	keyBind = new SOEKeyBind();
 
+	fontname = "Monospace";
+	fontsize = 12;
+	setFont(QFont(fontname, fontsize));
+
 	counter = 0;
 	m_SetCharGroup = new QGroupBox("Set Char");
+	QVBoxLayout *setCharGroupLayout = new QVBoxLayout;
 	settingmenu = 0;
-	setCharSizeLabel = new QLabel(tr("size:"));
+	setCharSizeLabel = new QLabel(tr("Size:"));
 	setCharSizeSpinBox = new QSpinBox;
 	setCharSizeSpinBox->setRange(0, 64);
 	QHBoxLayout *setCharSizeLayout = new QHBoxLayout;
 	setCharSizeLayout->addWidget(setCharSizeLabel);
 	setCharSizeLayout->addWidget(setCharSizeSpinBox);
-	m_SetCharGroup->setLayout(setCharSizeLayout);
+	setFontLabel = new QLabel(tr("Font:"));
+	setFontBox = new QComboBox;
+	setFontBox->addItem("Arial");
+	setFontBox->addItem("Impact");
+	setFontBox->addItem("Serif");
+	setFontBox->addItem("Monospace");
+	QHBoxLayout *setFontLayout = new QHBoxLayout;
+	setFontLayout->addWidget(setFontLabel);
+	setFontLayout->addWidget(setFontBox);
+	setCharGroupLayout->addLayout(setCharSizeLayout);
+	setCharGroupLayout->addLayout(setFontLayout);
+	m_SetCharGroup->setLayout(setCharGroupLayout);
 
 	m_SetBGGroup = new QGroupBox("Set Background");
 
 	m_SetDisplayGroup = new QGroupBox("Set Display Area");
 
-	m_SettingFinishedButton = new QPushButton(tr("Set"));
 	makeWidgets();
 }
 
@@ -98,7 +113,6 @@ void Widget::makeWidgets()
 	m_l_SettingMenuLayout->addWidget(m_SetCharGroup);
 	m_l_SettingMenuLayout->addWidget(m_SetBGGroup);
 	m_l_SettingMenuLayout->addWidget(m_SetDisplayGroup);
-	m_l_SettingMenuLayout->addWidget(m_SettingFinishedButton);
 	m_v2_WholeLayout = new QHBoxLayout();
 	m_v2_WholeLayout->addLayout(m_l_SettingMenuLayout);
 	m_v2_WholeLayout->addLayout(m_v_WholeLayout);
@@ -110,9 +124,9 @@ void Widget::makeWidgets()
 	connect(m_FileName, SIGNAL(returnPressed()), this, SLOT(lineLoad()));
 	connect(m_SaveButton, SIGNAL(clicked()), this, SLOT(buttonSave()));
 	connect(m_LoadButton, SIGNAL(clicked()), this, SLOT(buttonLoad()));
-	//connect(m_SettingButton, SIGNAL(clicked()), this, SLOT(settingClickedSlot()));
 	connect(m_SettingButton, SIGNAL(clicked()), this, SLOT(hideSubTextArea()));
-	connect(m_SettingFinishedButton, SIGNAL(clicked()), this, SLOT(settingFinishedSlot()));
+	connect(setCharSizeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(changeFontSize(int)));
+	connect(setFontBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(changeFontName(QString)));
 	connect(m_AddTab, SIGNAL(clicked()), this, SLOT(newTab()));
 	connect(m_AllowTab, SIGNAL(clicked()), this, SLOT(setSettingMenuArea()));
 	connect(m_Tab, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
@@ -153,7 +167,7 @@ void Widget::newTab()
 	QTextCursor t_cursor = m_Text->textCursor();
 	t_cursor.movePosition(QTextCursor::End);
 	m_Text->setTextCursor(t_cursor);
-	m_Text->setFont(QFont("Arial", setCharSizeSpinBox->value()));
+	m_Text->setFont(QFont(fontname, fontsize));
 
 	g_textedit_map.insert(map<QWidget*, SoTextEdit*>::value_type(m_Tab->widget(m_Tab->count() - 1), m_Text));
 	g_filename_map.insert(map<QWidget*, QString>::value_type(m_Tab->widget(m_Tab->count() - 1), title));
@@ -179,9 +193,10 @@ if (settingmenu == 0){
 	m_SetCharGroup->hide();
 	setCharSizeLabel->hide();
 	setCharSizeSpinBox->hide();
+	setFontLabel->hide();
+	setFontBox->hide();
 	m_SetBGGroup->hide();
 	m_SetDisplayGroup->hide();
-	m_SettingFinishedButton->hide();
 	settingmenu ++;
 }
 else {
@@ -189,9 +204,10 @@ else {
 	m_SetCharGroup->show();
 	setCharSizeLabel->show();
 	setCharSizeSpinBox->show();
+	setFontLabel->show();
+	setFontBox->show();
 	m_SetBGGroup->show();
 	m_SetDisplayGroup->show();
-	m_SettingFinishedButton->show();
 	settingmenu --;
 }
 }
@@ -253,6 +269,11 @@ void Widget::buttonLoad()
 		g_textedit_map[m_Tab->currentWidget()]->setPlainText(in.readAll());
 		m_FileName->setText(fileName);
 		g_filename_map[m_Tab->currentWidget()] = fileName;
+
+		QString tab_title = (fileName.split("/", QString::SkipEmptyParts)).back();
+		m_Tab->setTabText(m_Tab->currentIndex(), tab_title);
+
+
 	}
 }
 
@@ -290,12 +311,23 @@ void Widget::appendViewSlot()
 	m_SubText->appendPlainText( "------------------" );
 }
 
-void Widget::settingFinishedSlot()
+void Widget::changeFontSize(int t)
 {
 	int i;
-	for(i = 0; i < countTab; i++){
-		if(g_textedit_map[m_Tab->widget(i)] != NULL)
-	g_textedit_map[m_Tab->widget(i)]->setFont(QFont("Arial", setCharSizeSpinBox->value()));
+	fontsize = t;
+for(i = 0; i < countTab; i ++){
+if(g_textedit_map[m_Tab->widget(i)] != NULL)
+g_textedit_map[m_Tab->widget(i)]->setFont(QFont(fontname, fontsize));
+}
+}
+
+void Widget::changeFontName(QString str)
+{
+	int i;
+	fontname = str;
+for(i = 0; i < countTab; i ++){
+if(g_textedit_map[m_Tab->widget(i)] != NULL)
+g_textedit_map[m_Tab->widget(i)]->setFont(QFont(fontname, fontsize));
 }
 }
 
