@@ -10,12 +10,11 @@ MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(
 	cursorPositionLabel = new QLabel(this);
 	tabNumLabel = new QLabel(this);
 
-	cursorPositionLabel->setText(QString("line:1 column:2"));
-
+	cursorPositionLabel->setText(QString("line:1 column:1"));
+	tabNumLabel->setText(QString("tab number:1"));
 	statusBar()->addPermanentWidget(cursorPositionLabel, 0);
 	statusBar()->addPermanentWidget(tabNumLabel, 0);
 	statusBar()->addPermanentWidget(timeLabel,0);
-	tabNumLabel->setText(QString("tab number:1"));
 
 	w_bgImage = QImage("image/screen4.png");
 
@@ -35,6 +34,7 @@ MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(
 	setAutoFillBackground(true);
 	setCentralWidget(m_Widget);
 	setWindowTitle(tr("Soeditor"));
+	setFont(QFont("Arial",12));
 	resize(1024,1024);
 	show(); 
 }
@@ -51,7 +51,6 @@ void MainWindow::createTextCursorPositionStatusBar()
 cursorline = m_Widget->getTextCursorLine();
 cursorcolumn = m_Widget->getTextCursorColumn();
 cursorPositionLabel->setText(QString("line:%1 column:%2").arg(cursorline + 1).arg(cursorcolumn + 1));
-//statusBar()->showMessage(QString("line:%1 column:%2").arg(cursorline + 1).arg(cursorcolumn + 1));
 }
 
 void MainWindow::setCurrentTime()
@@ -64,7 +63,6 @@ void MainWindow::setCurrentTime()
 
 void MainWindow::setCurrentTabStatus(int t)
 {
-	//statusBar()->showMessage(QString("current tab number :%1").arg(t + 1));
 	tabNumLabel->setText(QString("tab number:%1").arg(t + 1));
 }
 

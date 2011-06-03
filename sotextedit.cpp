@@ -9,7 +9,6 @@ SoTextEdit::SoTextEdit()
 	setPlainText(tr(""));
 	setCursorWidth(6);
 	ensureCursorVisible();
-	setFont(QFont("Arial",12));
 
 	lineNumberArea = new LineNumberArea(this);
 	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
@@ -30,6 +29,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 	switch (input->key()) {
 	case Qt::Key_Shift:
 	case Qt::Key_Control:
+		printf("afafdsafsdfsd");
 	case Qt::Key_unknown:
 		input->ignore();
 		return;
@@ -111,9 +111,14 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		cursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
 
 		if (0 < block_stack) {
-			text.fill(' ', tab_width * block_stack);
+			if (text.contains(QChar('}'), Qt::CaseSensitive)) {
+				text.fill(' ', tab_width * (block_stack - 1));
+				position = position - count + (tab_width * (block_stack - 1));
+			} else {
+				text.fill(' ', tab_width * block_stack);
+				position = position - count + (tab_width * block_stack);
+			}
 			cursor.insertText(text);
-			position = position - count + (tab_width * block_stack);
 			cursor.setPosition(position);
 			setTextCursor(cursor);
 		} else {
@@ -453,7 +458,7 @@ void SoTextEdit::lineNumberAreaPaintEvent(QPaintEvent *event)
 {
 	QTextCursor t_cursor = textCursor();
 	QPainter painter(lineNumberArea);
-	painter.fillRect(event->rect(), Qt::lightGray);
+	painter.fillRect(event->rect(), Qt::white);
 	QTextBlock block = firstVisibleBlock();
 	int blockNumber = block.blockNumber();
 	int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
