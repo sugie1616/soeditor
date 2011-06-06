@@ -3,8 +3,8 @@
 using namespace std;
 
 
-	Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
-: QWidget(iParent, iFlags)
+Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
+  : QWidget(iParent, iFlags)
 {
 	k_Mode = OFF;
 	proc = new QProcess(this);

@@ -1,7 +1,7 @@
 #include "soeditor.h"
 
 using namespace std;
-
+//a
 SoTextEdit::SoTextEdit() 
 {
 	block_stack = 0;
@@ -254,34 +254,35 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 				count++;
 			}
 
-			cursor.setPosition(position);
+			cursor.setPosition(position, QTextCursor::MoveAnchor);
 			cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
 			cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
 			text = cursor.selectedText();
 		} else {
 			position = cursor.position() - 1;
 			cursor.deletePreviousChar();
-			cursor.setPosition(position, QTextCursor::MoveAnchor);
+			cursor.movePosition(QTextCursor::NoMove, QTextCursor::MoveAnchor);
+			cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor);
+			text = cursor.selectedText();
+
+			QChar exception[] = {
+				' ', ';', '(', ')'
+			};
+
+			for (int count = 0; count < (int)((sizeof exception) / (sizeof exception[0])); count++) {
+				if (text[0] == exception[count]) {
+					cout << "asdlf";
+					cursor.setPosition(position);
+					cursor.movePosition(QTextCursor::PreviousWord, QTextCursor::MoveAnchor);
+					cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+					text = cursor.selectedText();
+				}
+			}
+				cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
+				cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
+				text = cursor.selectedText();
 		}
 
-		if (cursor.atEnd() ||
-			cursor.atBlockEnd()) {
-			cursor.setPosition(position - 1, QTextCursor::MoveAnchor);
-			cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
-			cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
-		} else {
-			cursor.setPosition(position + 1, QTextCursor::KeepAnchor);
-			text = cursor.selectedText();
-			if (text[0] == QChar(' ')) {
-				cursor.setPosition(position - 1, QTextCursor::MoveAnchor);
-				cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
-				cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
-			} else {
-				cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
-				cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
-			}
-		}
-		text = cursor.selectedText();
 
 		std::cout << block_stack <<std::endl;
 		break;
