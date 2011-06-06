@@ -1,7 +1,7 @@
 #include "soeditor.h"
 
 using namespace std;
-
+//a
 SoTextEdit::SoTextEdit() 
 {
 	block_stack = 0;
