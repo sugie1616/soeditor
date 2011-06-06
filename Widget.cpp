@@ -5,8 +5,8 @@ using namespace std;
 map<QWidget*, SoTextEdit*> g_textedit_map;
 map<QWidget*, QString> g_filename_map;
 
-	Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
-: QWidget(iParent, iFlags)
+Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
+  : QWidget(iParent, iFlags)
 {
 	k_Mode = OFF;
 	proc = new QProcess(this);
