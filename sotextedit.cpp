@@ -288,6 +288,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 	default:
 		position = cursor.position() + 1;
 		cursor.insertText(input->text());
+		cursor.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor);
 		cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
 		cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
 		text = cursor.selectedText();
