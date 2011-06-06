@@ -10,8 +10,8 @@ MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(
 	cursorPositionLabel = new QLabel(this);
 	tabNumLabel = new QLabel(this);
 
-	cursorPositionLabel->setText(QString("line:1 column:1"));
-	tabNumLabel->setText(QString("tab number:1"));
+	cursorPositionLabel->setText(QString("<line:1 column:1>"));
+	tabNumLabel->setText(QString("<tab number:1>"));
 	statusBar()->addPermanentWidget(cursorPositionLabel, 0);
 	statusBar()->addPermanentWidget(tabNumLabel, 0);
 	statusBar()->addPermanentWidget(timeLabel,0);
@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(
 	w_bgImage = QImage("image/screen4.png");
 
 	QPalette palette;
+	//palette.setBrush(QPalette::Background, w_bgImage);
 	palette.setBrush(QPalette::Background, w_bgImage);
 	setPalette(palette);
 
@@ -28,6 +29,10 @@ MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(
 	createTimeStatusBar();
 	setCurrentTime();
 	m_Widget = new Widget(this);
+	QPalette basicalWidgetPalette;
+	basicalWidgetPalette.setColor(QPalette::Background, QColor(0, 0, 0, 28));
+	m_Widget->setPalette(basicalWidgetPalette);
+	m_Widget->setAutoFillBackground(true);
 	connect(m_Widget, SIGNAL(textCursorPositionChangedSignal()), this, SLOT(createTextCursorPositionStatusBar()));
 	connect(m_Widget, SIGNAL(settingClickedSignal()), this, SLOT(setWindowBG()));
 	connect(m_Widget, SIGNAL(currentTabChangedSignal(int)), this, SLOT(setCurrentTabStatus(int)));
@@ -50,15 +55,18 @@ void MainWindow::createTextCursorPositionStatusBar()
 {
 cursorline = m_Widget->getTextCursorLine();
 cursorcolumn = m_Widget->getTextCursorColumn();
-cursorPositionLabel->setText(QString("line:%1 column:%2").arg(cursorline + 1).arg(cursorcolumn + 1));
+cursorPositionLabel->setText(QString("<line:%1 column:%2>").arg(cursorline + 1).arg(cursorcolumn + 1));
 }
 
 void MainWindow::setCurrentTime()
 {
 	dt = QDateTime::currentDateTime();
 	now = dt.toString();
+	QString str;
 	now[0] = ' ';
-	timeLabel->setText(now);
+	now[3] = '/';
+	str = "<" + now + ">";
+	timeLabel->setText(str);
 }
 
 void MainWindow::setCurrentTabStatus(int t)
