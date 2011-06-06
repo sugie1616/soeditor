@@ -14,8 +14,6 @@
 #include <readline/history.h>
 
 #define LINE_SIZE 64
-#define OFF 0
-#define ON 1
 
 class SoTextEdit;
 class Widget;
@@ -70,10 +68,11 @@ class Widget : public QWidget
 	signals :
 		void settingClickedSignal();
 		void textCursorPositionChangedSignal();
-		void currentTabChangedSignal(int t);
+		void currentTabChangedSignal(int t);//
 	protected slots :
 		void newTab();
 		void closeTab(int index);
+		void textChecker();
 		void lineLoad();
 		void buttonLoad();
 		void buttonSave();
@@ -88,14 +87,10 @@ class Widget : public QWidget
 		void textCursorPositionChangedSlot1(int p);
 		void textCursorPositionChangedSlot2();
 		void currentTabChangedSlot(int t);
+		void hideSubTextArea();
 		void changeFontSize(int fontsize);
 		void changeFontName(QString fontname);
 		void setSettingMenuArea();
-		void konohaMode();
-		void konohaEval();
-		void appendKonohaEvaled();
-		void filemenuViewer(int i);
-		void subtextViewer(int i);
 		
 	private:
 		void makeWidgets();
@@ -103,8 +98,8 @@ class Widget : public QWidget
 		int tabRemoveChecker;
 		QString fontname;
 		int fontsize;
+		int counter;
 		int settingmenu;
-		int k_Mode;
 		QHBoxLayout *m_h_StatusLayout;
 		QHBoxLayout *m_s_CmdLayout;
 		QHBoxLayout *m_c_TextLayout;
@@ -127,6 +122,8 @@ class Widget : public QWidget
 		QGroupBox *m_SetBGGroup;
 		QGroupBox *m_SetDisplayGroup;
 
+
+
 		QLabel *m_CmdLabel;
 		QLineEdit *m_CmdLine;
 
@@ -134,19 +131,12 @@ class Widget : public QWidget
 		QToolButton *m_AddTab;
 		QToolButton *m_AllowTab;
 
-		QWidget *settingMenuWidget;
-		QWidget *fileMenuWidget;
-		QWidget *mainTextWidget;
-		QWidget *subTextWidget;
-
 		SoTextEdit *m_Text;
 		SoTextEdit *m_SubText;
 
 		QAction *m_AddTabAction;
-		QAction *CtrlK;
 		
 		QProcess *proc;
-		QProcess *k_proc;
 		
 		SOEKeyBind *keyBind;
 };
@@ -227,17 +217,32 @@ public:
 	QStringList tokenizer(QString text);
 	void dump_token(QStringList token);
 	void lineNumberAreaPaintEvent(QPaintEvent *event);
-	int lineNumberAreaWidth();
+	int lineNumberAreaWidth();//new
 protected:
-	void resizeEvent(QResizeEvent *event);
+	void resizeEvent(QResizeEvent *event);//new
 private:
 	int block_stack;
 	int tab_width;
+<<<<<<< HEAD
 	QWidget *lineNumberArea;
 	int lineNumberWidth;
 	void insertText(int position, QString text);
 signals:
 	void returnPressed();
+=======
+	QWidget *lineNumberArea;//new
+	int lineNumberWidth;//new
+	QColor builtin;
+	QColor comment;
+	QColor string;
+	QColor keyword;
+	QColor constant;
+	QColor function;
+	QColor variable;
+	QColor type;
+	QColor warning;
+	QColor default_color;
+>>>>>>> parent of 750294e... aasdlfkj
 private slots:
 	void updateLineNumberAreaWidth(int newBlockCount);
 	void updateLineNumberArea(const QRect &, int);
