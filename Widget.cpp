@@ -21,6 +21,7 @@ map<QWidget*, QString> g_filename_map;
 
 void Widget::makeWidgets()
 {
+	tabRemoveChecker = 0;
 	countTab = 0;
 
 	k_proc = new QProcess(this);

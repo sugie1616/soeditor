@@ -235,6 +235,9 @@ private:
 	int tab_width;
 	QWidget *lineNumberArea;
 	int lineNumberWidth;
+	QColor type;
+	QColor keyword;
+	QColor default_color;
 signals:
 	void returnPressed();
 private slots:
