@@ -235,6 +235,7 @@ private:
 	int tab_width;
 	QWidget *lineNumberArea;
 	int lineNumberWidth;
+	void insertText(int position, QString text);
 signals:
 	void returnPressed();
 private slots:

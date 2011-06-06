@@ -262,10 +262,11 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		} else {
 			cursor.setPosition(position + 1, QTextCursor::KeepAnchor);
 			text = cursor.selectedText();
-			if (text[0] == QChar(' ')) {
+			if (text[0] == QChar(' ') ||
+				text[0] == QChar(';')) {
 				cursor.setPosition(position - 1, QTextCursor::MoveAnchor);
-				cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
-				cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
+				cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+				cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
 			} else {
 				cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
 				cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
@@ -285,10 +286,19 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 	}
 
 	qDebug() << text;
+	insertText(position, text);
+	cursor.setPosition(position);
+	setTextCursor(cursor);
+}
 
+void SoTextEdit::insertText(int position, QString text)
+{
 	if (text.isEmpty()) {
 		return;
 	}
+
+	QTextCursor cursor;
+	cursor.setPosition(position);
 
 //for c
 	if (text == QString("void")) {
@@ -369,8 +379,6 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		cursor.insertText(text, setColor(Qt::black));
 	}
 
-	cursor.setPosition(position, QTextCursor::MoveAnchor);
-	setTextCursor(cursor);
 }
 
 QTextCharFormat SoTextEdit::setColor(QColor color)
