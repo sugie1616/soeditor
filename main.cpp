@@ -1,5 +1,5 @@
-#include <QApplication>
 #include "soeditor.h"
+#include <QApplication>
 
 int main(int argc, char *argv[]) 
 {

@@ -10,10 +10,6 @@ SoTextEdit::SoTextEdit()
 	setCursorWidth(6);
 	ensureCursorVisible();
 
-	type = QColor(Qt::darkGreen);
-	keyword = QColor(Qt::darkMagenta);
-	default_color = QColor(Qt::black);
-
 	lineNumberArea = new LineNumberArea(this);
 	connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateLineNumberAreaWidth(int)));
 	connect(this, SIGNAL(updateRequest(const QRect &, int)), this, SLOT(updateLineNumberArea(const QRect &, int)));
@@ -25,10 +21,9 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 
 	QTextCursor cursor = textCursor();
 	QString text;
-//	QTextList list;
 	QTextBlock block;
 	int position = 0;
-	int position_in_block = 0;
+	//int position_in_block = 0;
 	int count;
 
 	switch (input->key()) {
@@ -73,6 +68,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 
 		std::cout << block_stack << std::endl;
 		return;
+
 	case Qt::Key_Return:
 		cursor.insertText(input->text());
 		cursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor);
@@ -87,8 +83,16 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 			}
 			count++;
 		}
+		if (0 < block_stack) {
+			cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor);
+			cursor.insertText(text.fill(' ', tab_width * block_stack));
+		}
+		std::cout << block_stack << std::endl;
+		emit returnPressed();
+		return;
 		cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor);
 		std::cout << block_stack << std::endl;
+
 		emit returnPressed();
 
 	case Qt::Key_Tab:
@@ -250,10 +254,11 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 				count++;
 			}
 
-			cursor.setPosition(position, QTextCursor::MoveAnchor);
+			cursor.setPosition(position);
 			cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
 			cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
-		} else { 
+			text = cursor.selectedText();
+		} else {
 			position = cursor.position() - 1;
 			cursor.deletePreviousChar();
 			cursor.setPosition(position, QTextCursor::MoveAnchor);
@@ -267,8 +272,7 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 		} else {
 			cursor.setPosition(position + 1, QTextCursor::KeepAnchor);
 			text = cursor.selectedText();
-			if (text[0] == QChar(' ') ||
-				text[0] == QChar(';')) {
+			if (text[0] == QChar(' ')) {
 				cursor.setPosition(position - 1, QTextCursor::MoveAnchor);
 				cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
 				cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::KeepAnchor);
@@ -278,12 +282,12 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 			}
 		}
 		text = cursor.selectedText();
+
 		std::cout << block_stack <<std::endl;
 		break;
 	default:
 		position = cursor.position() + 1;
 		cursor.insertText(input->text());
-		cursor.movePosition(QTextCursor::Left,QTextCursor::MoveAnchor);
 		cursor.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
 		cursor.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
 		text = cursor.selectedText();
@@ -297,81 +301,81 @@ void SoTextEdit::keyPressEvent(QKeyEvent *input)
 
 //for c
 	if (text == QString("void")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("char")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("short")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("int")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("long")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("float")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("double")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("out")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("static")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("const")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("signed")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("unsigned")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("extern")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("volatile")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("register")) {
-		cursor.insertText(text, setColor(type));
+		cursor.insertText(text, setColor(Qt::darkGreen));
 	} else if (text == QString("return")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("goto")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("if")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("else")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("switch")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("case")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("default")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("break")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("for")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("while")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("do")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("continue")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("typedef")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("struct")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("enum")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("union")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("sizeof")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 
 //for c++
 	} else if (text == QString("private")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("protected")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("class")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else if (text == QString("public")) {
-		cursor.insertText(text, setColor(keyword));
+		cursor.insertText(text, setColor(Qt::darkMagenta));
 	} else {
-		cursor.insertText(text, setColor(default_color));
+		cursor.insertText(text, setColor(Qt::black));
 	}
 
 	cursor.setPosition(position, QTextCursor::MoveAnchor);
