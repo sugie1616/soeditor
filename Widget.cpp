@@ -2,67 +2,81 @@
 
 using namespace std;
 
-map<QWidget*, SoTextEdit*> g_textedit_map;
-map<QWidget*, QString> g_filename_map;
 
 Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
   : QWidget(iParent, iFlags)
 {
+	k_Mode = OFF;
 	proc = new QProcess(this);
 	keyBind = new SOEKeyBind();
+	QFile kTmpFile("tmp.k");
+	tabRemoveChecker = 0;
 
 	fontname = "Monospace";
 	fontsize = 12;
 	setFont(QFont(fontname, fontsize));
-
-	counter = 0;
-	m_SetCharGroup = new QGroupBox("Set Char");
-	QVBoxLayout *setCharGroupLayout = new QVBoxLayout;
-	settingmenu = 0;
-	setCharSizeLabel = new QLabel(tr("Size:"));
-	setCharSizeSpinBox = new QSpinBox;
-	setCharSizeSpinBox->setRange(0, 64);
-	QHBoxLayout *setCharSizeLayout = new QHBoxLayout;
-	setCharSizeLayout->addWidget(setCharSizeLabel);
-	setCharSizeLayout->addWidget(setCharSizeSpinBox);
-	setFontLabel = new QLabel(tr("Font:"));
-	setFontBox = new QComboBox;
-	setFontBox->addItem("Arial");
-	setFontBox->addItem("Impact");
-	setFontBox->addItem("Serif");
-	setFontBox->addItem("Monospace");
-	QHBoxLayout *setFontLayout = new QHBoxLayout;
-	setFontLayout->addWidget(setFontLabel);
-	setFontLayout->addWidget(setFontBox);
-	setCharGroupLayout->addLayout(setCharSizeLayout);
-	setCharGroupLayout->addLayout(setFontLayout);
-	m_SetCharGroup->setLayout(setCharGroupLayout);
-
-	m_SetBGGroup = new QGroupBox("Set Background");
-
-	m_SetDisplayGroup = new QGroupBox("Set Display Area");
 
 	makeWidgets();
 }
 
 void Widget::makeWidgets()
 {
-	tabRemoveChecker = 0;
 	countTab = 0;
 
-	//for save&load
+	k_proc = new QProcess(this);
+	CtrlK = new QAction(this);
+	CtrlK->setShortcut(tr("Ctrl+K"));
+
+	//Make File Area
 	m_FileLabel = new QLabel(tr("File :"));
 	m_FileName = new QLineEdit(this);
 	m_FileName->setMaxLength(LINE_SIZE);
 	m_SaveButton = new QPushButton(tr("&Save"));
+	connect(m_SaveButton, SIGNAL(clicked()), this, SLOT(buttonSave()));
 	m_LoadButton = new QPushButton(tr("&Load"));
+	connect(m_LoadButton, SIGNAL(clicked()), this, SLOT(buttonLoad()));
+	m_SettingButton = new QPushButton(tr("&Setting"));
+	//
+  //Make Setting Menu Area
+	m_SettingCharGroup = new QGroupBox("Set Char");
+	QVBoxLayout *settingCharGroupLayout = new QVBoxLayout;
+	settingMenu = OFF;
+	settingCharSizeLabel = new QLabel(tr("Size:"));
+	settingCharSizeSpinBox = new QSpinBox();
+	settingCharSizeSpinBox->setRange(0, 64);
+
+	QHBoxLayout *settingCharSizeLayout = new QHBoxLayout();
+	settingCharSizeLayout->addWidget(settingCharSizeLabel);
+	settingCharSizeLayout->addWidget(settingCharSizeSpinBox);
+	settingFontLabel = new QLabel(tr("Font:"));
+	settingFontBox = new QComboBox();
+	settingFontBox->addItem("Arial");
+	settingFontBox->addItem("Impact");
+	settingFontBox->addItem("Serif");
+	settingFontBox->addItem("Monospace");
+
+	QHBoxLayout *settingFontLayout = new QHBoxLayout();
+	settingFontLayout->addWidget(settingFontLabel);
+	settingFontLayout->addWidget(settingFontBox);
+	settingCharGroupLayout->addLayout(settingCharSizeLayout);
+	settingCharGroupLayout->addLayout(settingFontLayout);
+	m_SettingCharGroup->setLayout(settingCharGroupLayout);
+
+	m_SettingBGGroup = new QGroupBox("Set Background");
+
+	m_SettingDisplayGroup = new QGroupBox("Set Display Area");
+	QCheckBox *fileBox  = new QCheckBox("File Menu Area");
+	QCheckBox *subtextBox  = new QCheckBox("Sub Text Area");
+	QVBoxLayout *areaBoxLayout = new QVBoxLayout;
+	fileBox->setChecked (true);
+	subtextBox->setChecked (true);
+	areaBoxLayout->addWidget(fileBox);
+	areaBoxLayout->addWidget(subtextBox);
+	m_SettingDisplayGroup->setLayout(areaBoxLayout);
 	//
 
-	m_CmdLabel = new QLabel(tr("Cmd:"));
-	m_CmdLine = new QLineEdit(this);
 
-	m_SettingButton = new QPushButton(tr("&Setting"));
-
+	//Make Main Text Area
 	m_Tab = new QTabWidget(this);
 	m_Tab->setTabShape(QTabWidget::Triangular);
 	m_Tab->setUsesScrollButtons(true);
@@ -70,64 +84,90 @@ void Widget::makeWidgets()
 	m_Tab->setTabsClosable(true);
 	m_Tab->setDocumentMode(true);
 
+
 	m_AddTab = new QToolButton();
 	m_AddTab->setCursor(Qt::ArrowCursor);
 	m_AddTab->setAutoRaise(true);
 	m_AddTab->setIcon(QIcon("image/plus_icon.png"));
-	m_Tab->setCornerWidget(m_AddTab, Qt::TopRightCorner);
 
 	m_AllowTab = new QToolButton();
 	m_AllowTab->setCursor(Qt::ArrowCursor);
 	m_AllowTab->setAutoRaise(true);
-	m_Tab->setCornerWidget(m_AllowTab, Qt::TopLeftCorner);
 
+	QHBoxLayout *iconLayout = new QHBoxLayout;
+	iconLayout->addWidget(m_AllowTab);
+	iconLayout->addWidget(m_AddTab);
+	iconLayout->setMargin(0);
+	iconLayout->setSpacing(0);
+	QWidget *iconWidget = new QWidget();
+	iconWidget->setLayout(iconLayout);
+	m_Tab->setCornerWidget(iconWidget, Qt::TopLeftCorner);
+	//
+
+  //Make Sub Text Area
+	m_CmdLabel = new QLabel(tr("Cmd:"));
+	m_CmdLine = new QLineEdit(this);
 	m_SubText = new SoTextEdit();
 	m_SubText->setCursorWidth(6);
 	m_SubText->ensureCursorVisible();
+	//
 
 
-	m_h_StatusLayout = new QHBoxLayout();
-	m_h_StatusLayout->addWidget(m_FileLabel);
-	m_h_StatusLayout->addWidget(m_FileName);
-	m_h_StatusLayout->addWidget(m_SaveButton);
-	m_h_StatusLayout->addWidget(m_LoadButton);
-	m_h_StatusLayout->addWidget(m_SettingButton);
+  //Set Layout
+	m_StatusLayout = new QHBoxLayout();
+	m_StatusLayout->addWidget(m_FileLabel);
+	m_StatusLayout->addWidget(m_FileName);
+	m_StatusLayout->addWidget(m_SaveButton);
+	m_StatusLayout->addWidget(m_LoadButton);
+	m_StatusLayout->addWidget(m_SettingButton);
+	fileMenuWidget = new QWidget();
+	fileMenuWidget->setLayout(m_StatusLayout);
 
-	m_s_CmdLayout = new QHBoxLayout();
-	m_s_CmdLayout->addWidget(m_CmdLabel);
-	m_s_CmdLayout->addWidget(m_CmdLine);
+	m_CmdLayout = new QHBoxLayout();
+	m_CmdLayout->addWidget(m_CmdLabel);
+	m_CmdLayout->addWidget(m_CmdLine);
 
-	m_r_SubTextLayout = new QVBoxLayout();
-	m_r_SubTextLayout->addLayout(m_s_CmdLayout);
-	m_r_SubTextLayout->addWidget(m_SubText);
+	m_SubTextLayout = new QVBoxLayout();
+	m_SubTextLayout->addLayout(m_CmdLayout);
+	m_SubTextLayout->addWidget(m_SubText);
+	subTextWidget = new QWidget();
+	subTextWidget->setLayout(m_SubTextLayout);
 
-	m_c_TextLayout = new QHBoxLayout();
-	m_c_TextLayout->addWidget(m_Tab);
-	m_c_TextLayout->addLayout(m_r_SubTextLayout);
-	m_c_TextLayout->setStretch ( 0, 2);
+	m_TextLayout = new QHBoxLayout();
+	m_TextLayout->addWidget(m_Tab);
+	m_TextLayout->addWidget(subTextWidget);
+	m_TextLayout->setStretch ( 0, 2);
 
-	m_v_WholeLayout = new QVBoxLayout;
-	m_v_WholeLayout->addLayout(m_h_StatusLayout);
-	m_v_WholeLayout->addLayout(m_c_TextLayout);
+	m_WholeLayout = new QVBoxLayout;
+	m_WholeLayout->addWidget(fileMenuWidget);
+	m_WholeLayout->addLayout(m_TextLayout);
 
-	m_l_SettingMenuLayout = new QVBoxLayout();
-	m_l_SettingMenuLayout->addWidget(m_SetCharGroup);
-	m_l_SettingMenuLayout->addWidget(m_SetBGGroup);
-	m_l_SettingMenuLayout->addWidget(m_SetDisplayGroup);
-	m_v2_WholeLayout = new QHBoxLayout();
-	m_v2_WholeLayout->addLayout(m_l_SettingMenuLayout);
-	m_v2_WholeLayout->addLayout(m_v_WholeLayout);
-	setLayout(m_v2_WholeLayout);
+	m_SettingMenuLayout = new QVBoxLayout();
+	m_SettingMenuLayout->addWidget(m_SettingCharGroup);
+	m_SettingMenuLayout->addWidget(m_SettingBGGroup);
+	m_SettingMenuLayout->addWidget(m_SettingDisplayGroup);
+	settingMenuWidget = new QWidget();
+	settingMenuWidget->setLayout(m_SettingMenuLayout);
 
+	QPalette basicalWidgetPalette;
+	basicalWidgetPalette.setColor(QPalette::Background, Qt::white);
+
+	settingMenuWidget->setPalette(basicalWidgetPalette);
+	settingMenuWidget->setAutoFillBackground(true);
+
+	m_WholeLayout2 = new QHBoxLayout();
+	m_WholeLayout2->addWidget(settingMenuWidget);
+	m_WholeLayout2->addLayout(m_WholeLayout);
+	setLayout(m_WholeLayout2);
+	//
 	setSettingMenuArea();
 	newTab();
 
 	connect(m_FileName, SIGNAL(returnPressed()), this, SLOT(lineLoad()));
-	connect(m_SaveButton, SIGNAL(clicked()), this, SLOT(buttonSave()));
-	connect(m_LoadButton, SIGNAL(clicked()), this, SLOT(buttonLoad()));
-	connect(m_SettingButton, SIGNAL(clicked()), this, SLOT(hideSubTextArea()));
-	connect(setCharSizeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(changeFontSize(int)));
-	connect(setFontBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(changeFontName(QString)));
+	connect(settingCharSizeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(changeFontSize(int)));
+	connect(settingFontBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(changeFontName(QString)));
+	connect(fileBox, SIGNAL(stateChanged(int)), this, SLOT(filemenuViewer(int)));
+	connect(subtextBox, SIGNAL(stateChanged(int)), this, SLOT(subtextViewer(int)));
 	connect(m_AddTab, SIGNAL(clicked()), this, SLOT(newTab()));
 	connect(m_AllowTab, SIGNAL(clicked()), this, SLOT(setSettingMenuArea()));
 	connect(m_Tab, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
@@ -138,23 +178,26 @@ void Widget::makeWidgets()
 	connect(keyBind, SIGNAL(CtrlB_PressedSignal()), this, SLOT(setCtrlB()));
 	connect(keyBind, SIGNAL(CtrlN_PressedSignal()), this, SLOT(setCtrlN()));
 	connect(keyBind, SIGNAL(CtrlP_PressedSignal()), this, SLOT(setCtrlP()));
+	connect(CtrlK, SIGNAL(triggered()), this, SLOT(konohaMode()));
 	connect(m_CmdLine, SIGNAL(returnPressed()), this, SLOT(cmdExecSlot()));
 	connect(proc, SIGNAL(readyReadStandardOutput()), this, SLOT(appendViewSlot()));
 }
-
-void Widget::hideSubTextArea()
+void Widget::filemenuViewer(int i)
 {
-	if(counter == 0){
-	m_CmdLabel->hide();
-	m_CmdLine->hide();
-	m_SubText->hide();
-	counter ++;
+	if (i == Qt::Unchecked){
+		fileMenuWidget->hide();
 	}
-	else {
-	m_CmdLabel->show();
-	m_CmdLine->show();
-	m_SubText->show();
-	counter --;
+	if (i == Qt::Checked){
+		fileMenuWidget->show();
+	}
+}
+void Widget::subtextViewer(int i)
+{
+	if (i == Qt::Unchecked){
+		subTextWidget->hide();
+	}
+	if (i == Qt::Checked){
+		subTextWidget->show();
 	}
 }
 
@@ -169,11 +212,13 @@ void Widget::newTab()
 	t_cursor.movePosition(QTextCursor::End);
 	m_Text->setTextCursor(t_cursor);
 	m_Text->setFont(QFont(fontname, fontsize));
+	m_Text->addAction(CtrlK);
 
-	g_textedit_map.insert(map<QWidget*, SoTextEdit*>::value_type(m_Tab->widget(m_Tab->count() - 1), m_Text));
-	g_filename_map.insert(map<QWidget*, QString>::value_type(m_Tab->widget(m_Tab->count() - 1), title));
+	m_textedit_map.insert(map<QWidget*, SoTextEdit*>::value_type(m_Tab->widget(m_Tab->count() - 1), m_Text));
+	m_filename_map.insert(map<QWidget*, QString>::value_type(m_Tab->widget(m_Tab->count() - 1), title));
 	m_FileName->setText(title);
 	connect(m_Text, SIGNAL(cursorPositionChanged()), this, SLOT(textCursorPositionChangedSlot2()));
+	connect(m_Text, SIGNAL(returnPressed()), this, SLOT(konohaRead()));
 	m_Tab->setCurrentIndex(m_Tab->count() - 1);
 }
 
@@ -181,69 +226,57 @@ void Widget::closeTab(int index)
 {
 	if(countTab > (tabRemoveChecker + 1))
 	{
-	  g_textedit_map.erase(m_Tab->widget(index));
-	  g_filename_map.erase(m_Tab->widget(index));
-	  tabRemoveChecker ++;
-	  m_Tab->removeTab(index);
-  }
+	m_textedit_map.erase(m_Tab->widget(index));
+	m_filename_map.erase(m_Tab->widget(index));
+	tabRemoveChecker ++;
+	m_Tab->removeTab(index);
+	}
 }
 void Widget::setSettingMenuArea()
 {
-if (settingmenu == 0){
-	m_AllowTab->setIcon(QIcon("image/rightallow.png"));
-	m_SetCharGroup->hide();
-	setCharSizeLabel->hide();
-	setCharSizeSpinBox->hide();
-	setFontLabel->hide();
-	setFontBox->hide();
-	m_SetBGGroup->hide();
-	m_SetDisplayGroup->hide();
-	settingmenu ++;
-}
-else {
-	m_AllowTab->setIcon(QIcon("image/leftallow.png"));
-	m_SetCharGroup->show();
-	setCharSizeLabel->show();
-	setCharSizeSpinBox->show();
-	setFontLabel->show();
-	setFontBox->show();
-	m_SetBGGroup->show();
-	m_SetDisplayGroup->show();
-	settingmenu --;
-}
+	if (settingMenu == OFF){
+		m_AllowTab->setIcon(QIcon("image/rightallow.png"));
+		settingMenuWidget->hide();
+		settingMenu = ON;
+	}
+	else {
+		m_AllowTab->setIcon(QIcon("image/leftallow.png"));
+		settingMenuWidget->show();
+		settingMenu = OFF;
+	}
 }
 
 void Widget::lineLoad()
 {
 	QString fileName = m_FileName->text();
-	QFile file(fileName);
-
 	if (fileName.isEmpty()) {
 		return;
-	} else {
+	}   
+	else {
+		QFile file(fileName);
 		if (!file.open(QIODevice::ReadOnly)) {
 			return;
 		}
 		QTextStream in(&file);
-		g_textedit_map[m_Tab->currentWidget()]->setPlainText(in.readAll());
 		m_FileName->setText(fileName);
-		g_filename_map[m_Tab->currentWidget()] = fileName;
+		m_textedit_map[m_Tab->currentWidget()]->setPlainText(in.readAll());
+		m_filename_map[m_Tab->currentWidget()] = fileName;
 	}
 }
 
 void Widget::buttonSave()
 {
 	QString save_data;
-	save_data = g_textedit_map[m_Tab->currentWidget()]->toPlainText();
+	save_data = m_textedit_map[m_Tab->currentWidget()]->toPlainText();
 
 	QString fileName = QFileDialog::getSaveFileName(this,
 			tr("Save to File"), "",
 			tr("all (*)"));
-	QFile file(fileName);
 
 	if (fileName.isEmpty()) {
 		return;
 	} else {
+	QFile file(fileName);
 		if (!file.open(QIODevice::WriteOnly)) {
 			return;
 		}
@@ -267,9 +300,9 @@ void Widget::buttonLoad()
 		}
 		QTextStream in(&file);
 		newTab();
-		g_textedit_map[m_Tab->currentWidget()]->setPlainText(in.readAll());
+		m_textedit_map[m_Tab->currentWidget()]->setPlainText(in.readAll());
 		m_FileName->setText(fileName);
-		g_filename_map[m_Tab->currentWidget()] = fileName;
+		m_filename_map[m_Tab->currentWidget()] = fileName;
 
 		QString tab_title = (fileName.split("/", QString::SkipEmptyParts)).back();
 		m_Tab->setTabText(m_Tab->currentIndex(), tab_title);
@@ -280,7 +313,7 @@ void Widget::buttonLoad()
 
 int Widget::filenameChange(int index)
 {
-	m_FileName->setText(g_filename_map[m_Tab->currentWidget()]);
+	m_FileName->setText(m_filename_map[m_Tab->currentWidget()]);
 	return index;
 }
 void Widget::settingClickedSlot()
@@ -293,14 +326,19 @@ void Widget::cmdExecSlot()
 {
 	QString cmd;
 	cmd = m_CmdLine->text();
-	if (cmd != "konoha"){
-	proc->start(cmd);
-	m_SubText->appendPlainText( ">>>" + cmd );
-	std::cout << "command exec." << std::endl;
-	m_CmdLine->clear();
+	if (cmd != "konoha" && cmd != "rst"){
+		proc->start(cmd);
+		m_SubText->appendPlainText( ">>>" + cmd );
+		std::cout << "command exec." << std::endl;
+		m_CmdLine->clear();
+	}
+	if (cmd == "rst"){
+		std::cout << "command exec." << std::endl;
+		m_CmdLine->clear();
+		m_SubText->setPlainText("");
 	}
 	else {
-	m_CmdLine->clear();
+		m_CmdLine->clear();
 	}
 }
 
@@ -316,46 +354,86 @@ void Widget::changeFontSize(int t)
 {
 	int i;
 	fontsize = t;
-for(i = 0; i < countTab; i ++){
-if(g_textedit_map[m_Tab->widget(i)] != NULL)
-g_textedit_map[m_Tab->widget(i)]->setFont(QFont(fontname, fontsize));
-}
+	for(i = 0; i < countTab; i ++){
+		if(m_textedit_map[m_Tab->widget(i)] != NULL)
+			m_textedit_map[m_Tab->widget(i)]->setFont(QFont(fontname, fontsize));
+	}
 }
 
 void Widget::changeFontName(QString str)
 {
 	int i;
 	fontname = str;
-for(i = 0; i < countTab; i ++){
-if(g_textedit_map[m_Tab->widget(i)] != NULL)
-g_textedit_map[m_Tab->widget(i)]->setFont(QFont(fontname, fontsize));
+	for(i = 0; i < countTab; i ++){
+		if(m_textedit_map[m_Tab->widget(i)] != NULL)
+			m_textedit_map[m_Tab->widget(i)]->setFont(QFont(fontname, fontsize));
+	}
 }
+
+void Widget::konohaMode()
+{
+	if (k_Mode == OFF){
+		k_Mode = ON;
+		printf("KonohaMode Start\n");
+		m_textedit_map[m_Tab->currentWidget()]->appendPlainText("/*------ start konoha mode ------*/");
+		m_textedit_map[m_Tab->currentWidget()]->appendPlainText(">>> ");
+		m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+		QString program("Konoha");
+		k_proc->start(program);
+	}
+	else {
+		k_Mode = OFF;
+		k_proc->terminate();
+		m_textedit_map[m_Tab->currentWidget()]->appendPlainText("/*------ finish konoha mode ------*/");
+	}
+}
+
+void Widget::konohaRead()
+{
+	if (k_Mode == ON){
+		QTextCursor cr;
+		cr = m_textedit_map[m_Tab->currentWidget()]->textCursor();
+		cr.deletePreviousChar();
+		cr.movePosition(QTextCursor::Up, QTextCursor::KeepAnchor);
+		cr.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
+		cr.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+		QString outbuf = cr.selectedText();
+		outbuf = outbuf.mid(4);
+		printf("%s\n",qPrintable(outbuf));
+		m_textedit_map[m_Tab->currentWidget()]->appendPlainText(">>> ");
+		m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+		m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+	}
+}
+
+void Widget::konohaEval()
+{
+}
+
+void Widget::appendKonohaEvaled()
+{
 }
 
 void Widget::setCtrlF()
 {
-	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Right, QTextCursor::MoveAnchor);
+	m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Right, QTextCursor::MoveAnchor);
 }
 void Widget::setCtrlB()
 {
-	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Left, QTextCursor::MoveAnchor);
+	m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Left, QTextCursor::MoveAnchor);
 }
 void Widget::setCtrlP()
 {
-	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Up, QTextCursor::MoveAnchor);
+	m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Up, QTextCursor::MoveAnchor);
 }
 void Widget::setCtrlN()
 {
-	g_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+	m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 }
 
-void Widget::textChecker()
+void Widget::textCursorPositionChangedSlot1(int i /*UNUSED*/)
 {
-	//m_Tab->widget(m_Tab->currentIndex())->setStyleSheet("color: red;");
-}
-
-void Widget::textCursorPositionChangedSlot1(int)
-{
+	i = i;
 	emit textCursorPositionChangedSignal();
 }
 
@@ -366,12 +444,12 @@ void Widget::textCursorPositionChangedSlot2()
 
 int Widget::getTextCursorLine()
 {
-	return g_textedit_map[m_Tab->widget(m_Tab->currentIndex())]->textCursor().blockNumber();
+	return m_textedit_map[m_Tab->widget(m_Tab->currentIndex())]->textCursor().blockNumber();
 }
 
 int Widget::getTextCursorColumn()
 {
-	return g_textedit_map[m_Tab->widget(m_Tab->currentIndex())]->textCursor().columnNumber();
+	return m_textedit_map[m_Tab->widget(m_Tab->currentIndex())]->textCursor().columnNumber();
 }
 
 void Widget::currentTabChangedSlot(int t)
