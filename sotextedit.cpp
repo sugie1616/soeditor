@@ -459,7 +459,7 @@ int SoTextEdit::lineNumberAreaWidth()
 
 	int space = 3 + fontMetrics().width(QLatin1Char('9')) * digits;
 
-	return space*1.5;
+	return space*2;
 }
 
 void SoTextEdit::updateLineNumberAreaWidth(int /* newBlockCount */)

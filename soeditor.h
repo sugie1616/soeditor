@@ -5,13 +5,14 @@
 #include <QTextStream>
 #include <QtGui>
 #include <QWidget>
-#include <list>
 #include <qstring.h>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <list>
 #include <readline/history.h>
+#include <map>
+
 
 #define LINE_SIZE 64
 #define OFF 0
@@ -77,7 +78,7 @@ class Widget : public QWidget
 		void lineLoad();
 		void buttonLoad();
 		void buttonSave();
-		int filenameChange(int);
+		int filenameChange(int i);
 		void cmdExecSlot();
 		void appendViewSlot();
 		void settingClickedSlot();
@@ -104,15 +105,17 @@ class Widget : public QWidget
 		int tabRemoveChecker;
 		QString fontname;
 		int fontsize;
-		int settingmenu;
+		int settingMenu;
 		int k_Mode;
-		QHBoxLayout *m_h_StatusLayout;
-		QHBoxLayout *m_s_CmdLayout;
-		QHBoxLayout *m_c_TextLayout;
-		QVBoxLayout *m_r_SubTextLayout;
-		QVBoxLayout *m_v_WholeLayout;
-		QVBoxLayout *m_l_SettingMenuLayout;
-		QHBoxLayout *m_v2_WholeLayout;
+		std::map<QWidget*, SoTextEdit*> m_textedit_map;
+		std::map<QWidget*, QString> m_filename_map;
+		QHBoxLayout *m_StatusLayout;
+		QHBoxLayout *m_CmdLayout;
+		QHBoxLayout *m_TextLayout;
+		QVBoxLayout *m_SubTextLayout;
+		QVBoxLayout *m_WholeLayout;
+		QVBoxLayout *m_SettingMenuLayout;
+		QHBoxLayout *m_WholeLayout2;
 
 		QLabel *m_FileLabel;
 		QLineEdit *m_FileName;
@@ -120,13 +123,13 @@ class Widget : public QWidget
 		QPushButton *m_LoadButton;
 		QPushButton *m_SettingButton;
 		
-		QGroupBox *m_SetCharGroup;
-		QLabel *setCharSizeLabel;
-		QSpinBox *setCharSizeSpinBox;
-		QLabel *setFontLabel;
-		QComboBox *setFontBox;
-		QGroupBox *m_SetBGGroup;
-		QGroupBox *m_SetDisplayGroup;
+		QGroupBox *m_SettingCharGroup;
+		QLabel *settingCharSizeLabel;
+		QSpinBox *settingCharSizeSpinBox;
+		QLabel *settingFontLabel;
+		QComboBox *settingFontBox;
+		QGroupBox *m_SettingBGGroup;
+		QGroupBox *m_SettingDisplayGroup;
 
 		QLabel *m_CmdLabel;
 		QLineEdit *m_CmdLine;
@@ -150,6 +153,7 @@ class Widget : public QWidget
 		QProcess *k_proc;
 		
 		SOEKeyBind *keyBind;
+
 };
 
 class SOEKeyBind :public QAction
