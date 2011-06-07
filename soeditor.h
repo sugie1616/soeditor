@@ -5,15 +5,18 @@
 #include <QTextStream>
 #include <QtGui>
 #include <QWidget>
-#include <list>
 #include <qstring.h>
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <list>
 #include <readline/history.h>
+#include <map>
+
 
 #define LINE_SIZE 64
+#define OFF 0
+#define ON 1
 
 class SoTextEdit;
 class Widget;
@@ -68,15 +71,14 @@ class Widget : public QWidget
 	signals :
 		void settingClickedSignal();
 		void textCursorPositionChangedSignal();
-		void currentTabChangedSignal(int t);//
+		void currentTabChangedSignal(int t);
 	protected slots :
 		void newTab();
 		void closeTab(int index);
-		void textChecker();
 		void lineLoad();
 		void buttonLoad();
 		void buttonSave();
-		int filenameChange(int);
+		int filenameChange(int i);
 		void cmdExecSlot();
 		void appendViewSlot();
 		void settingClickedSlot();
@@ -87,10 +89,15 @@ class Widget : public QWidget
 		void textCursorPositionChangedSlot1(int p);
 		void textCursorPositionChangedSlot2();
 		void currentTabChangedSlot(int t);
-		void hideSubTextArea();
 		void changeFontSize(int fontsize);
 		void changeFontName(QString fontname);
 		void setSettingMenuArea();
+		void konohaMode();
+		void konohaRead();
+		void konohaEval();
+		void appendKonohaEvaled();
+		void filemenuViewer(int i);
+		void subtextViewer(int i);
 		
 	private:
 		void makeWidgets();
@@ -98,15 +105,17 @@ class Widget : public QWidget
 		int tabRemoveChecker;
 		QString fontname;
 		int fontsize;
-		int counter;
-		int settingmenu;
-		QHBoxLayout *m_h_StatusLayout;
-		QHBoxLayout *m_s_CmdLayout;
-		QHBoxLayout *m_c_TextLayout;
-		QVBoxLayout *m_r_SubTextLayout;
-		QVBoxLayout *m_v_WholeLayout;
-		QVBoxLayout *m_l_SettingMenuLayout;
-		QHBoxLayout *m_v2_WholeLayout;
+		int settingMenu;
+		int k_Mode;
+		std::map<QWidget*, SoTextEdit*> m_textedit_map;
+		std::map<QWidget*, QString> m_filename_map;
+		QHBoxLayout *m_StatusLayout;
+		QHBoxLayout *m_CmdLayout;
+		QHBoxLayout *m_TextLayout;
+		QVBoxLayout *m_SubTextLayout;
+		QVBoxLayout *m_WholeLayout;
+		QVBoxLayout *m_SettingMenuLayout;
+		QHBoxLayout *m_WholeLayout2;
 
 		QLabel *m_FileLabel;
 		QLineEdit *m_FileName;
@@ -114,15 +123,13 @@ class Widget : public QWidget
 		QPushButton *m_LoadButton;
 		QPushButton *m_SettingButton;
 		
-		QGroupBox *m_SetCharGroup;
-		QLabel *setCharSizeLabel;
-		QSpinBox *setCharSizeSpinBox;
-		QLabel *setFontLabel;
-		QComboBox *setFontBox;
-		QGroupBox *m_SetBGGroup;
-		QGroupBox *m_SetDisplayGroup;
-
-
+		QGroupBox *m_SettingCharGroup;
+		QLabel *settingCharSizeLabel;
+		QSpinBox *settingCharSizeSpinBox;
+		QLabel *settingFontLabel;
+		QComboBox *settingFontBox;
+		QGroupBox *m_SettingBGGroup;
+		QGroupBox *m_SettingDisplayGroup;
 
 		QLabel *m_CmdLabel;
 		QLineEdit *m_CmdLine;
@@ -131,14 +138,22 @@ class Widget : public QWidget
 		QToolButton *m_AddTab;
 		QToolButton *m_AllowTab;
 
+		QWidget *settingMenuWidget;
+		QWidget *fileMenuWidget;
+		QWidget *mainTextWidget;
+		QWidget *subTextWidget;
+
 		SoTextEdit *m_Text;
 		SoTextEdit *m_SubText;
 
 		QAction *m_AddTabAction;
+		QAction *CtrlK;
 		
 		QProcess *proc;
+		QProcess *k_proc;
 		
 		SOEKeyBind *keyBind;
+
 };
 
 class SOEKeyBind :public QAction
@@ -217,25 +232,14 @@ public:
 	QStringList tokenizer(QString text);
 	void dump_token(QStringList token);
 	void lineNumberAreaPaintEvent(QPaintEvent *event);
-	int lineNumberAreaWidth();//new
+	int lineNumberAreaWidth();
 protected:
-	void resizeEvent(QResizeEvent *event);//new
+	void resizeEvent(QResizeEvent *event);
 private:
 	int block_stack;
 	int tab_width;
 	QWidget *lineNumberArea;
 	int lineNumberWidth;
-	void insertText(int position, QString text);
-	QColor builtin;
-	QColor comment;
-	QColor string;
-	QColor keyword;
-	QColor constant;
-	QColor function;
-	QColor variable;
-	QColor type;
-	QColor warning;
-	QColor default_color;
 signals:
 	void returnPressed();
 private slots:
