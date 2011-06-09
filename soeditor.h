@@ -61,42 +61,42 @@ class MainWindow : public QMainWindow
 class Widget : public QWidget
 {
 	Q_OBJECT
-	public:
-		Widget(QWidget * iParent = 0, Qt::WindowFlags iFlags = 0);
-		int getTextCursorLine();
-		int getTextCursorColumn();
-	signals :
-		void settingClickedSignal();
-		void textCursorPositionChangedSignal();
-		void currentTabChangedSignal(int t);
-	protected slots :
-		void newTab();
-		void closeTab(int index);
-		void lineLoad();
-		void buttonLoad();
-		void buttonSave();
-		int filenameChange(int i);
-		void cmdExecSlot();
-		void appendViewSlot();
-		void settingClickedSlot();
-		void setCtrlF();
-		void setCtrlB();
-		void setCtrlP();
-		void setCtrlN();
-		void textCursorPositionChangedSlot1(int p);
-		void textCursorPositionChangedSlot2();
-		void currentTabChangedSlot(int t);
-		void changeFontSize(int fontsize);
-		void changeFontName(QString fontname);
-		void setSettingMenuArea();
-		void konohaMode();
-		void konohaRead();
-		void konohaEval();
-		void appendKnhScriptSlot();
-		void filemenuViewer(int i);
-		void subtextViewer(int i);
-		
-	private:
+public:
+	Widget(QWidget * iParent = 0, Qt::WindowFlags iFlags = 0);
+	int getTextCursorLine();
+	int getTextCursorColumn();
+signals :
+	void settingClickedSignal();
+	void textCursorPositionChangedSignal();
+	void currentTabChangedSignal(int t);
+protected slots :
+	void newTab();
+	void closeTab(int index);
+	void lineLoad();
+	void buttonLoad();
+	void buttonSave();
+	int filenameChange(int i);
+	void cmdExecSlot();
+	void appendViewSlot();
+	void settingClickedSlot();
+	void setCtrlF();
+	void setCtrlB();
+	void setCtrlP();
+	void setCtrlN();
+	void textCursorPositionChangedSlot1(int p);
+	void textCursorPositionChangedSlot2();
+	void currentTabChangedSlot(int t);
+	void changeFontSize(int fontsize);
+	void changeFontName(QString fontname);
+	void setSettingMenuArea();
+	void konohaMode();
+	void konohaRead();
+	void konohaEval();
+	void appendKnhScriptSlot();
+	void filemenuViewer(int i);
+	void subtextViewer(int i);
+	
+private:
 		void makeWidgets();
 		int countTab;
 		int tabRemoveChecker;
@@ -152,6 +152,11 @@ class Widget : public QWidget
 		SOEKeyBind *keyBind;
 
 };
+
+class FileArea : public QWidget
+class MainTextArea : public QWidget
+class SubTextArea : public QWidget
+class SettingMenuArea : public QWidget
 
 class SOEKeyBind :public QAction
 {
