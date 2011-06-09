@@ -3,13 +3,14 @@
 using namespace std;
 
 
-Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
-  : QWidget(iParent, iFlags)
+	Widget::Widget(QWidget * iParent, Qt::WindowFlags iFlags)
+: QWidget(iParent, iFlags)
 {
 	k_Mode = OFF;
 	proc = new QProcess(this);
+	k_proc = new QProcess(this);
+	connect(k_proc, SIGNAL(readyReadStandardOutput()), this, SLOT(appendKnhScriptSlot()));
 	keyBind = new SOEKeyBind();
-	QFile kTmpFile("tmp.k");
 	tabRemoveChecker = 0;
 
 	fontname = "Monospace";
@@ -23,7 +24,6 @@ void Widget::makeWidgets()
 {
 	countTab = 0;
 
-	k_proc = new QProcess(this);
 	CtrlK = new QAction(this);
 	CtrlK->setShortcut(tr("Ctrl+K"));
 
@@ -76,7 +76,7 @@ void Widget::makeWidgets()
 	//
 
 
-	//Make Main Text Area
+  //Make Main Text Area
 	m_Tab = new QTabWidget(this);
 	m_Tab->setTabShape(QTabWidget::Triangular);
 	m_Tab->setUsesScrollButtons(true);
@@ -226,12 +226,13 @@ void Widget::closeTab(int index)
 {
 	if(countTab > (tabRemoveChecker + 1))
 	{
-	m_textedit_map.erase(m_Tab->widget(index));
-	m_filename_map.erase(m_Tab->widget(index));
-	tabRemoveChecker ++;
-	m_Tab->removeTab(index);
-	}
+	  m_textedit_map.erase(m_Tab->widget(index));
+	  m_filename_map.erase(m_Tab->widget(index));
+	  tabRemoveChecker ++;
+	  m_Tab->removeTab(index);
+  }
 }
+
 void Widget::setSettingMenuArea()
 {
 	if (settingMenu == OFF){
@@ -276,7 +277,7 @@ void Widget::buttonSave()
 	if (fileName.isEmpty()) {
 		return;
 	} else {
-	QFile file(fileName);
+		QFile file(fileName);
 		if (!file.open(QIODevice::WriteOnly)) {
 			return;
 		}
@@ -306,8 +307,6 @@ void Widget::buttonLoad()
 
 		QString tab_title = (fileName.split("/", QString::SkipEmptyParts)).back();
 		m_Tab->setTabText(m_Tab->currentIndex(), tab_title);
-
-
 	}
 }
 
@@ -316,11 +315,11 @@ int Widget::filenameChange(int index)
 	m_FileName->setText(m_filename_map[m_Tab->currentWidget()]);
 	return index;
 }
+
 void Widget::settingClickedSlot()
 {
 	emit settingClickedSignal();
 }
-
 
 void Widget::cmdExecSlot()
 {
@@ -372,18 +371,22 @@ void Widget::changeFontName(QString str)
 
 void Widget::konohaMode()
 {
+
 	if (k_Mode == OFF){
 		k_Mode = ON;
-		printf("KonohaMode Start\n");
+		m_textedit_map[m_Tab->currentWidget()]->setKonohaMode(k_Mode);
+		printf("KonohaMode Started\n");
 		m_textedit_map[m_Tab->currentWidget()]->appendPlainText("/*------ start konoha mode ------*/");
-		m_textedit_map[m_Tab->currentWidget()]->appendPlainText(">>> ");
+		m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 		m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
-		QString program("Konoha");
-		k_proc->start(program);
+		k_proc->setReadChannelMode(QProcess::MergedChannels);
+		k_proc->setReadChannel(QProcess::StandardOutput);
+		k_proc->start("konoha");
 	}
 	else {
 		k_Mode = OFF;
 		k_proc->terminate();
+		printf("KonohaMode Finished\n");
 		m_textedit_map[m_Tab->currentWidget()]->appendPlainText("/*------ finish konoha mode ------*/");
 	}
 }
@@ -397,20 +400,25 @@ void Widget::konohaRead()
 		cr.movePosition(QTextCursor::Up, QTextCursor::KeepAnchor);
 		cr.movePosition(QTextCursor::StartOfLine, QTextCursor::KeepAnchor);
 		cr.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
-		QString outbuf = cr.selectedText();
-		outbuf = outbuf.mid(4);
-		printf("%s\n",qPrintable(outbuf));
-		m_textedit_map[m_Tab->currentWidget()]->appendPlainText(">>> ");
-		m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
-		m_textedit_map[m_Tab->currentWidget()]->moveCursor(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+
+		QString kScript = cr.selectedText();
+		QRegExp pattern(">>>");
+		kScript = kScript.replace(pattern, "");
+		kScript = kScript.simplified();
+		k_proc->write(qPrintable(kScript));
+		k_proc->write("\r\n");
+
+		printf("%s\n",qPrintable(kScript));
 	}
+}
+void Widget::appendKnhScriptSlot()
+{
+	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
+	QString str(codec->toUnicode(k_proc->readAll()));
+	m_textedit_map[m_Tab->currentWidget()]->appendPlainText( str );
 }
 
 void Widget::konohaEval()
-{
-}
-
-void Widget::appendKonohaEvaled()
 {
 }
 
