@@ -1,4 +1,4 @@
-#include "soeditor.h"
+#include "soeditor.hpp"
 
 MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(iParent, iFlags)
 {
