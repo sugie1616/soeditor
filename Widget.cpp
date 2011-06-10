@@ -1,5 +1,4 @@
 #include "soeditor.hpp"
-
 using namespace std;
 
 
@@ -7,7 +6,6 @@ using namespace std;
 : QWidget(iParent, iFlags)
 {
 	k_Mode = OFF;
-	proc = new QProcess(this);
 	k_proc = new QProcess(this);
 	connect(k_proc, SIGNAL(readyReadStandardOutput()), this, SLOT(appendKnhScriptSlot()));
 	keyBind = new SOEKeyBind();
@@ -37,42 +35,12 @@ void Widget::makeWidgets()
 	connect(m_LoadButton, SIGNAL(clicked()), this, SLOT(buttonLoad()));
 	m_SettingButton = new QPushButton(tr("&Setting"));
 	//
-  //Make Setting Menu Area
-	m_SettingCharGroup = new QGroupBox("Set Char");
-	QVBoxLayout *settingCharGroupLayout = new QVBoxLayout;
-	settingMenu = OFF;
-	settingCharSizeLabel = new QLabel(tr("Size:"));
-	settingCharSizeSpinBox = new QSpinBox();
-	settingCharSizeSpinBox->setRange(0, 64);
-
-	QHBoxLayout *settingCharSizeLayout = new QHBoxLayout();
-	settingCharSizeLayout->addWidget(settingCharSizeLabel);
-	settingCharSizeLayout->addWidget(settingCharSizeSpinBox);
-	settingFontLabel = new QLabel(tr("Font:"));
-	settingFontBox = new QComboBox();
-	settingFontBox->addItem("Arial");
-	settingFontBox->addItem("Impact");
-	settingFontBox->addItem("Serif");
-	settingFontBox->addItem("Monospace");
-
-	QHBoxLayout *settingFontLayout = new QHBoxLayout();
-	settingFontLayout->addWidget(settingFontLabel);
-	settingFontLayout->addWidget(settingFontBox);
-	settingCharGroupLayout->addLayout(settingCharSizeLayout);
-	settingCharGroupLayout->addLayout(settingFontLayout);
-	m_SettingCharGroup->setLayout(settingCharGroupLayout);
-
-	m_SettingBGGroup = new QGroupBox("Set Background");
-
-	m_SettingDisplayGroup = new QGroupBox("Set Display Area");
-	QCheckBox *fileBox  = new QCheckBox("File Menu Area");
-	QCheckBox *subtextBox  = new QCheckBox("Sub Text Area");
-	QVBoxLayout *areaBoxLayout = new QVBoxLayout;
-	fileBox->setChecked (true);
-	subtextBox->setChecked (true);
-	areaBoxLayout->addWidget(fileBox);
-	areaBoxLayout->addWidget(subtextBox);
-	m_SettingDisplayGroup->setLayout(areaBoxLayout);
+ //Make Setting Menu Area
+	menuAreaWidget = new SOEMenuAreaWidget();
+	connect(menuAreaWidget, SIGNAL(charSizeChanged(int)), this, SLOT(changeFontSize(int)));
+	connect(menuAreaWidget, SIGNAL(charFontChanged(QString)), this, SLOT(changeFontName(QString)));
+	connect(menuAreaWidget, SIGNAL(fileMenuViewChanged(int)), this, SLOT(filemenuViewer(int)));
+	connect(menuAreaWidget, SIGNAL(subTextViewChanged(int)), this, SLOT(subtextViewer(int)));
 	//
 
 
@@ -105,11 +73,7 @@ void Widget::makeWidgets()
 	//
 
   //Make Sub Text Area
-	m_CmdLabel = new QLabel(tr("Cmd:"));
-	m_CmdLine = new QLineEdit(this);
-	m_SubText = new SoTextEdit();
-	m_SubText->setCursorWidth(6);
-	m_SubText->ensureCursorVisible();
+	subTextAreaWidget = new SOESubTextAreaWidget();
 	//
 
 
@@ -123,50 +87,24 @@ void Widget::makeWidgets()
 	fileMenuWidget = new QWidget();
 	fileMenuWidget->setLayout(m_StatusLayout);
 
-	m_CmdLayout = new QHBoxLayout();
-	m_CmdLayout->addWidget(m_CmdLabel);
-	m_CmdLayout->addWidget(m_CmdLine);
-
-	m_SubTextLayout = new QVBoxLayout();
-	m_SubTextLayout->addLayout(m_CmdLayout);
-	m_SubTextLayout->addWidget(m_SubText);
-	subTextWidget = new QWidget();
-	subTextWidget->setLayout(m_SubTextLayout);
-
 	m_TextLayout = new QHBoxLayout();
 	m_TextLayout->addWidget(m_Tab);
-	m_TextLayout->addWidget(subTextWidget);
+	m_TextLayout->addWidget(subTextAreaWidget);
 	m_TextLayout->setStretch ( 0, 2);
 
 	m_WholeLayout = new QVBoxLayout;
 	m_WholeLayout->addWidget(fileMenuWidget);
 	m_WholeLayout->addLayout(m_TextLayout);
 
-	m_SettingMenuLayout = new QVBoxLayout();
-	m_SettingMenuLayout->addWidget(m_SettingCharGroup);
-	m_SettingMenuLayout->addWidget(m_SettingBGGroup);
-	m_SettingMenuLayout->addWidget(m_SettingDisplayGroup);
-	settingMenuWidget = new QWidget();
-	settingMenuWidget->setLayout(m_SettingMenuLayout);
-
-	QPalette basicalWidgetPalette;
-	basicalWidgetPalette.setColor(QPalette::Background, Qt::white);
-
-	settingMenuWidget->setPalette(basicalWidgetPalette);
-	settingMenuWidget->setAutoFillBackground(true);
-
 	m_WholeLayout2 = new QHBoxLayout();
-	m_WholeLayout2->addWidget(settingMenuWidget);
+	m_WholeLayout2->addWidget(menuAreaWidget);
 	m_WholeLayout2->addLayout(m_WholeLayout);
 	setLayout(m_WholeLayout2);
 	//
 	setSettingMenuArea();
 	newTab();
+
 	connect(m_FileName, SIGNAL(returnPressed()), this, SLOT(lineLoad()));
-	connect(settingCharSizeSpinBox, SIGNAL(valueChanged(int)), this, SLOT(changeFontSize(int)));
-	connect(settingFontBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(changeFontName(QString)));
-	connect(fileBox, SIGNAL(stateChanged(int)), this, SLOT(filemenuViewer(int)));
-	connect(subtextBox, SIGNAL(stateChanged(int)), this, SLOT(subtextViewer(int)));
 	connect(m_AddTab, SIGNAL(clicked()), this, SLOT(newTab()));
 	connect(m_AllowTab, SIGNAL(clicked()), this, SLOT(setSettingMenuArea()));
 	connect(m_Tab, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
@@ -178,8 +116,6 @@ void Widget::makeWidgets()
 	connect(keyBind, SIGNAL(CtrlN_PressedSignal()), this, SLOT(setCtrlN()));
 	connect(keyBind, SIGNAL(CtrlP_PressedSignal()), this, SLOT(setCtrlP()));
 	connect(CtrlK, SIGNAL(triggered()), this, SLOT(konohaMode()));
-	connect(m_CmdLine, SIGNAL(returnPressed()), this, SLOT(cmdExecSlot()));
-	connect(proc, SIGNAL(readyReadStandardOutput()), this, SLOT(appendViewSlot()));
 }
 void Widget::filemenuViewer(int i)
 {
@@ -193,10 +129,10 @@ void Widget::filemenuViewer(int i)
 void Widget::subtextViewer(int i)
 {
 	if (i == Qt::Unchecked){
-		subTextWidget->hide();
+		subTextAreaWidget->hide();
 	}
 	if (i == Qt::Checked){
-		subTextWidget->show();
+		subTextAreaWidget->show();
 	}
 }
 
@@ -236,12 +172,12 @@ void Widget::setSettingMenuArea()
 {
 	if (settingMenu == OFF){
 		m_AllowTab->setIcon(QIcon("image/rightallow.png"));
-		settingMenuWidget->hide();
+		menuAreaWidget->hide();
 		settingMenu = ON;
 	}
 	else {
 		m_AllowTab->setIcon(QIcon("image/leftallow.png"));
-		settingMenuWidget->show();
+		menuAreaWidget->show();
 		settingMenu = OFF;
 	}
 }
@@ -318,34 +254,6 @@ int Widget::filenameChange(int index)
 void Widget::settingClickedSlot()
 {
 	emit settingClickedSignal();
-}
-
-void Widget::cmdExecSlot()
-{
-	QString cmd;
-	cmd = m_CmdLine->text();
-	if (cmd != "konoha" && cmd != "rst"){
-		proc->start(cmd);
-		m_SubText->appendPlainText( ">>>" + cmd );
-		std::cout << "command exec." << std::endl;
-		m_CmdLine->clear();
-	}
-	if (cmd == "rst"){
-		std::cout << "command exec." << std::endl;
-		m_CmdLine->clear();
-		m_SubText->setPlainText("");
-	}
-	else {
-		m_CmdLine->clear();
-	}
-}
-
-void Widget::appendViewSlot()
-{
-	QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-	QString str(codec->toUnicode(proc->readAllStandardOutput()));
-	m_SubText->appendPlainText( str );
-	m_SubText->appendPlainText( "------------------" );
 }
 
 void Widget::changeFontSize(int t)

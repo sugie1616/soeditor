@@ -15,11 +15,13 @@ class SoTextEdit;
 class Widget;
 class SOEKeyBind;
 class SoToken;
+class SOEMenuAreaWidget;
+class SOESubTextAreaWidget;
 
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT;
-private:
+	private:
 	QMenu *m_FileMenu;
 	QMenu *m_ViewMenu;
 	int countBG;
@@ -44,10 +46,10 @@ private:
 
 	void createMenus();
 	void createTimeStatusBar();
-public:
+	public:
 	MainWindow(QWidget * iParent = 0, Qt::WindowFlags iFlags = 0);
-protected slots:
-	void setCurrentTime();
+	protected slots:
+		void setCurrentTime();
 	void setWindowBG();
 	void createTextCursorPositionStatusBar();
 	void setCurrentTabStatus(int t);//
@@ -56,21 +58,20 @@ protected slots:
 class Widget : public QWidget
 {
 	Q_OBJECT;
-private:
+	private:
 	int countTab;
 	int tabRemoveChecker;
-	QString fontname;
-	int fontsize;
 	int settingMenu;
+	int fontsize;
+	QString fontname;
 	int k_Mode;
 	std::map<QWidget*, SoTextEdit*> m_textedit_map;
 	std::map<QWidget*, QString> m_filename_map;
 	QHBoxLayout *m_StatusLayout;
-	QHBoxLayout *m_CmdLayout;
 	QHBoxLayout *m_TextLayout;
-	QVBoxLayout *m_SubTextLayout;
+	//QHBoxLayout *m_CmdLayout;
+	//QVBoxLayout *m_SubTextLayout;
 	QVBoxLayout *m_WholeLayout;
-	QVBoxLayout *m_SettingMenuLayout;
 	QHBoxLayout *m_WholeLayout2;
 
 	QLabel *m_FileLabel;
@@ -78,38 +79,32 @@ private:
 	QPushButton *m_SaveButton;
 	QPushButton *m_LoadButton;
 	QPushButton *m_SettingButton;
-		
-	QGroupBox *m_SettingCharGroup;
-	QLabel *settingCharSizeLabel;
-	QSpinBox *settingCharSizeSpinBox;
-	QLabel *settingFontLabel;
-	QComboBox *settingFontBox;
-	QGroupBox *m_SettingBGGroup;
-	QGroupBox *m_SettingDisplayGroup;
 
-	QLabel *m_CmdLabel;
-	QLineEdit *m_CmdLine;
+	//QLabel *m_CmdLabel;
+	//QLineEdit *m_CmdLine;
 
 	QTabWidget *m_Tab;
 	QToolButton *m_AddTab;
 	QToolButton *m_AllowTab;
 
-	QWidget *settingMenuWidget;
 	QWidget *fileMenuWidget;
 	QWidget *mainTextWidget;
 	QWidget *subTextWidget;
 
 	SoTextEdit *m_Text;
-	SoTextEdit *m_SubText;
+	//SoTextEdit *m_SubText;
 
 	QAction *m_AddTabAction;
 	QAction *CtrlK;
-		
-	QProcess *proc;
+
+	//QProcess *proc;
 	QProcess *k_proc;
-		
+
 	SOEKeyBind *keyBind;
-public:
+	SOEMenuAreaWidget *menuAreaWidget;
+	SOESubTextAreaWidget *subTextAreaWidget;
+
+	public:
 	Widget(QWidget * iParent = 0, Qt::WindowFlags iFlags = 0);
 	void makeWidgets();
 	int getTextCursorLine();
@@ -118,15 +113,15 @@ signals :
 	void settingClickedSignal();
 	void textCursorPositionChangedSignal();
 	void currentTabChangedSignal(int t);
-protected slots :
+	protected slots :
 	void newTab();
 	void closeTab(int index);
 	void lineLoad();
 	void buttonLoad();
 	void buttonSave();
 	int filenameChange(int i);
-	void cmdExecSlot();
-	void appendViewSlot();
+	//void cmdExecSlot();
+	//void appendViewSlot();
 	void settingClickedSlot();
 	void setCtrlF();
 	void setCtrlB();
@@ -146,76 +141,89 @@ protected slots :
 	void appendKnhScriptSlot();
 };
 
-class SOEKeyBind :public QAction
+class SOEMenuAreaWidget : public QWidget
 {
-	Q_OBJECT;
+	Q_OBJECT
 
-public:
+	public :
+		SOEMenuAreaWidget();
+		void makeMenuAreaWidget();
+	private :
+		int charSize;
+		QString charFont;
+		int fileMenuState;
+		int subTextState;
+		QGroupBox *settingCharGroup;
+		QLabel *settingCharSizeLabel;
+		QSpinBox *settingCharSizeSpinBox;
+		QLabel *settingFontLabel;
+		QComboBox *settingFontBox;
+		QGroupBox *settingBGGroup;
+		QGroupBox *settingDisplayGroup;
+
+		QVBoxLayout *settingMenuLayout;
+		private slots :
+			void setCharSize(int cs);
+		void setCharFont(QString cf);
+		void setFileMenuView(int state);
+		void setSubTextView(int state);
+signals :
+		void charSizeChanged(int cs);
+		void charFontChanged(QString cf);
+		void fileMenuViewChanged(int state);
+		void subTextViewChanged(int state);
+};
+
+class SOESubTextAreaWidget : public QWidget
+{
+	Q_OBJECT
+
+	public:
+	SOESubTextAreaWidget();
+	void makeSubTextAreaWidget();
+	private slots:
+	void cmdExecSlot();
+	void appendViewSlot();
+	private:
+	QLabel *cmdLabel;
+	QLineEdit *cmdLine;
+	
+	QHBoxLayout *cmdLayout;
+	QVBoxLayout *subTextAreaLayout;
+
+	QProcess *proc;
+
+	SoTextEdit *subText;
+};
+
+class SOEKeyBind : public QAction
+{
+	Q_OBJECT
+
+	public:
 	SOEKeyBind(QObject *parent = 0);
 	//void setSOE_MainWidgetKeyBind(QWidget *widget);
 	void setSOE_TextKeyBind(SoTextEdit *text);
 	void setSOE_WindowKeyBind(QMainWindow *window);
 signals:
-	//void CtrlA_PressedSignal();
 	void CtrlB_PressedSignal();
-	//void CtrlC_PressedSignal();
-	//void CtrlD_PressedSignal();
-	//void CtrlE_PressedSignal();
 	void CtrlF_PressedSignal();
-	//void CtrlG_PressedSignal();
-	//void CtrlH_PressedSignal();
-	//void CtrlI_PressedSignal();
-	//void CtrlJ_PressedSignal();
-	//void CtrlK_PressedSignal();
-	//void CtrlL_PressedSignal();
-	//void CtrlM_PressedSignal();
 	void CtrlN_PressedSignal();
-	//void CtrlO_PressedSignal();
 	void CtrlP_PressedSignal();
 	void CtrlQ_PressedSignal();
-	//void CtrlR_PressedSignal();
-	//void CtrlS_PressedSignal();
-	//void CtrlT_PressedSignal();
-	//void CtrlU_PressedSignal();
-	//void CtrlV_PressedSignal();
-	//void CtrlW_PressedSignal();
-	//void CtrlX_PressedSignal();
-	//void CtrlY_PressedSignal();
-	//void CtrlZ_PressedSignal();
-protected slots:
-	//void CtrlA_PressedSlot();
-	void CtrlB_PressedSlot();
-	//void CtrlC_PressedSlot();
-	//void CtrlD_PressedSlot();
-	//void CtrlE_PressedSlot();
+	protected slots:
+		void CtrlB_PressedSlot();
 	void CtrlF_PressedSlot();
-	//void CtrlG_PressedSlot();
-	//void CtrlH_PressedSlot();
-	//void CtrlI_PressedSlot();
-	//void CtrlJ_PressedSlot();
-	//void CtrlK_PressedSlot();
-	//void CtrlL_PressedSlot();
-	//void CtrlM_PressedSlot();
 	void CtrlN_PressedSlot();
-	//void CtrlO_PressedSlot();
 	void CtrlP_PressedSlot();
 	void CtrlQ_PressedSlot();
-	//void CtrlR_PressedSlot();
-	//void CtrlS_PressedSlot();
-	//void CtrlT_PressedSlot();
-	//void CtrlU_PressedSlot();
-	//void CtrlV_PressedSlot();
-	//void CtrlW_PressedSlot();
-	//void CtrlX_PressedSlot();
-	//void CtrlY_PressedSlot();
-	//void CtrlZ_PressedSlot();
 };
 
 class SoTextEdit : public QPlainTextEdit
 {
 	Q_OBJECT;
 
-private:
+	private:
 	int block_stack;
 	int tab_width;
 	QWidget *lineNumberArea;
@@ -236,7 +244,7 @@ private:
 	QColor *warning_color;
 	QColor *default_color;
 
-public:
+	public:
 	typedef enum {
 		t_TYPE,
 		t_KEYWORD,
@@ -258,44 +266,44 @@ public:
 	int findBraceLeft(void);
 	SoToken** tokenizer(QString text);
 	void dumpToken(SoToken **token_list);
-protected:
+	protected:
 	void resizeEvent(QResizeEvent *event);
 signals:
 	void returnPressed();
-private slots:
-	void updateLineNumberAreaWidth(int newBlockCount);
+	private slots:
+		void updateLineNumberAreaWidth(int newBlockCount);
 	void updateLineNumberArea(const QRect &, int);
 };
 
 class LineNumberArea : public QWidget
 {
-private:
-	SoTextEdit *codeEditor;
+	private:
+		SoTextEdit *codeEditor;
 
-public:
-	LineNumberArea(SoTextEdit *editor) : QWidget(editor) {
-		codeEditor = editor;
-	}
+	public:
+		LineNumberArea(SoTextEdit *editor) : QWidget(editor) {
+			codeEditor = editor;
+		}
 
-	QSize sizeHint() const {
-		return QSize(codeEditor->lineNumberAreaWidth(), 0);
-	}
+		QSize sizeHint() const {
+			return QSize(codeEditor->lineNumberAreaWidth(), 0);
+		}
 
-protected:
-	void paintEvent(QPaintEvent *event) {
-		codeEditor->lineNumberAreaPaintEvent(event);
-	}
+	protected:
+		void paintEvent(QPaintEvent *event) {
+			codeEditor->lineNumberAreaPaintEvent(event);
+		}
 
 };
 
 class SoToken
 {
-private:
-	QString word;
-	int type;
-public:
-	void setWord(QString text);
-	QString getWord(void);
-	void setType(int i);
-	int getType(void);
+	private:
+		QString word;
+		int type;
+	public:
+		void setWord(QString text);
+		QString getWord(void);
+		void setType(int i);
+		int getType(void);
 };
