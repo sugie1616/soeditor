@@ -19,7 +19,6 @@ MainWindow::MainWindow(QWidget * iParent, Qt::WindowFlags iFlags) : QMainWindow(
 	w_bgImage = QImage("image/screen4.png");
 
 	QPalette palette;
-	//palette.setBrush(QPalette::Background, w_bgImage);
 	palette.setBrush(QPalette::Background, w_bgImage);
 	setPalette(palette);
 

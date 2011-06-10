@@ -49,7 +49,7 @@ class MainWindow : public QMainWindow
 	public:
 	MainWindow(QWidget * iParent = 0, Qt::WindowFlags iFlags = 0);
 	protected slots:
-		void setCurrentTime();
+	void setCurrentTime();
 	void setWindowBG();
 	void createTextCursorPositionStatusBar();
 	void setCurrentTabStatus(int t);//
@@ -69,8 +69,6 @@ class Widget : public QWidget
 	std::map<QWidget*, QString> m_filename_map;
 	QHBoxLayout *m_StatusLayout;
 	QHBoxLayout *m_TextLayout;
-	//QHBoxLayout *m_CmdLayout;
-	//QVBoxLayout *m_SubTextLayout;
 	QVBoxLayout *m_WholeLayout;
 	QHBoxLayout *m_WholeLayout2;
 
@@ -79,9 +77,6 @@ class Widget : public QWidget
 	QPushButton *m_SaveButton;
 	QPushButton *m_LoadButton;
 	QPushButton *m_SettingButton;
-
-	//QLabel *m_CmdLabel;
-	//QLineEdit *m_CmdLine;
 
 	QTabWidget *m_Tab;
 	QToolButton *m_AddTab;
@@ -92,12 +87,10 @@ class Widget : public QWidget
 	QWidget *subTextWidget;
 
 	SoTextEdit *m_Text;
-	//SoTextEdit *m_SubText;
 
 	QAction *m_AddTabAction;
 	QAction *CtrlK;
 
-	//QProcess *proc;
 	QProcess *k_proc;
 
 	SOEKeyBind *keyBind;
@@ -120,8 +113,6 @@ signals :
 	void buttonLoad();
 	void buttonSave();
 	int filenameChange(int i);
-	//void cmdExecSlot();
-	//void appendViewSlot();
 	void settingClickedSlot();
 	void setCtrlF();
 	void setCtrlB();
@@ -202,7 +193,6 @@ class SOEKeyBind : public QAction
 
 	public:
 	SOEKeyBind(QObject *parent = 0);
-	//void setSOE_MainWidgetKeyBind(QWidget *widget);
 	void setSOE_TextKeyBind(SoTextEdit *text);
 	void setSOE_WindowKeyBind(QMainWindow *window);
 signals:
